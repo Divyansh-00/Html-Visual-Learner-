@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Flexbox Visualizer — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Flexbox</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.flex-stage {
+  min-height: 280px;
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--border-color-strong);
+  background: var(--bg-muted);
+  padding: 20px;
+  transition: all 0.4s ease;
+  position: relative;
+}
+
+.flex-label {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.flex-item {
+  min-width: 60px;
+  min-height: 60px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  user-select: none;
+}
+
+.prop-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.prop-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.prop-btn:hover, .prop-btn.active {
+  background: rgba(99,102,241,0.1);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.prop-row {
+  margin-bottom: 18px;
+}
+
+.prop-row-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-layout-three-columns"></i> CSS</div>
+  <h1 class="page-title">Flexbox Visualizer</h1>
+  <p class="page-subtitle">Click property values to see how flexbox behaves. All changes update the layout and CSS instantly.</p>
+</div>
+
+<div class="row g-4">
+  <!-- Controls -->
+  <div class="col-lg-4">
+    <div class="card-custom mb-3">
+      <div class="card-header"><i class="bi bi-toggles me-2 text-accent"></i>Flex Container Properties</div>
+      <div class="card-body">
+
+        <div class="prop-row">
+          <div class="prop-row-label">flex-direction</div>
+          <div class="prop-select" id="dirBtns">
+            <button class="prop-btn active" data-prop="flexDirection" data-val="row">row</button>
+            <button class="prop-btn" data-prop="flexDirection" data-val="row-reverse">row-reverse</button>
+            <button class="prop-btn" data-prop="flexDirection" data-val="column">column</button>
+            <button class="prop-btn" data-prop="flexDirection" data-val="column-reverse">column-reverse</button>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">justify-content</div>
+          <div class="prop-select">
+            <button class="prop-btn active" data-prop="justifyContent" data-val="flex-start">flex-start</button>
+            <button class="prop-btn" data-prop="justifyContent" data-val="center">center</button>
+            <button class="prop-btn" data-prop="justifyContent" data-val="flex-end">flex-end</button>
+            <button class="prop-btn" data-prop="justifyContent" data-val="space-between">space-between</button>
+            <button class="prop-btn" data-prop="justifyContent" data-val="space-around">space-around</button>
+            <button class="prop-btn" data-prop="justifyContent" data-val="space-evenly">space-evenly</button>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">align-items</div>
+          <div class="prop-select">
+            <button class="prop-btn active" data-prop="alignItems" data-val="stretch">stretch</button>
+            <button class="prop-btn" data-prop="alignItems" data-val="flex-start">flex-start</button>
+            <button class="prop-btn" data-prop="alignItems" data-val="center">center</button>
+            <button class="prop-btn" data-prop="alignItems" data-val="flex-end">flex-end</button>
+            <button class="prop-btn" data-prop="alignItems" data-val="baseline">baseline</button>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">flex-wrap</div>
+          <div class="prop-select">
+            <button class="prop-btn active" data-prop="flexWrap" data-val="nowrap">nowrap</button>
+            <button class="prop-btn" data-prop="flexWrap" data-val="wrap">wrap</button>
+            <button class="prop-btn" data-prop="flexWrap" data-val="wrap-reverse">wrap-reverse</button>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">align-content</div>
+          <div class="prop-select">
+            <button class="prop-btn active" data-prop="alignContent" data-val="normal">normal</button>
+            <button class="prop-btn" data-prop="alignContent" data-val="flex-start">flex-start</button>
+            <button class="prop-btn" data-prop="alignContent" data-val="center">center</button>
+            <button class="prop-btn" data-prop="alignContent" data-val="flex-end">flex-end</button>
+            <button class="prop-btn" data-prop="alignContent" data-val="space-between">space-between</button>
+            <button class="prop-btn" data-prop="alignContent" data-val="space-around">space-around</button>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">gap</div>
+          <div class="control-row" style="margin-bottom:0;">
+            <input type="range" id="gapRange" min="0" max="40" value="12" oninput="updateGap(this.value)">
+            <span class="control-value" id="gapVal">12px</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="prop-row" style="margin-bottom:0;">
+          <div class="prop-row-label">Number of Items</div>
+          <div class="prop-select">
+            <button class="prop-btn active" onclick="setItems(3)">3</button>
+            <button class="prop-btn" onclick="setItems(4)">4</button>
+            <button class="prop-btn" onclick="setItems(5)">5</button>
+            <button class="prop-btn" onclick="setItems(6)">6</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-danger-custom" onclick="resetFlex()" style="width:100%;justify-content:center;">
+      <i class="bi bi-arrow-counterclockwise"></i> Reset All
+    </button>
+  </div>
+
+  <!-- Visual + Code -->
+  <div class="col-lg-8">
+
+    <!-- Explanation -->
+    <div class="card-custom mb-4" id="explanationCard">
+      <div class="card-header"><i class="bi bi-lightbulb me-2" style="color:var(--color-warning);"></i>Property Explanation</div>
+      <div class="card-body" style="font-size:13.5px;color:var(--text-secondary);line-height:1.6;" id="explanationText">
+        Select a property value above to see an explanation here.
+      </div>
+    </div>
+
+    <!-- Visual Stage -->
+    <div class="card-custom mb-4">
+      <div class="card-header"><span class="viz-card-title"><i class="bi bi-eye"></i>Visual Preview</span></div>
+      <div class="card-body">
+        <div class="flex-stage" id="flexStage">
+          <span class="flex-label">display: flex container</span>
+          <!-- Items injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Generated CSS -->
+    <div class="card-custom">
+      <div class="card-header">
+        <span class="viz-card-title"><i class="bi bi-code-slash"></i>Generated CSS</span>
+        <button class="btn-icon" onclick="copyFlexCSS()" title="Copy CSS">
+          <i class="bi bi-clipboard" id="flexCopyIcon"></i>
+        </button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="code-block" style="border-radius:0 0 var(--radius-lg) var(--radius-lg);box-shadow:none;">
+          <div class="code-content">
+            <pre><code id="flexCssOutput"></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6'];
+
+const EXPLANATIONS = {
+  flexDirection: {
+    row: 'Items are placed left to right along the horizontal main axis (default).',
+    'row-reverse': 'Items are placed right to left — the main axis is reversed.',
+    column: 'Items are stacked top to bottom; the main axis is now vertical.',
+    'column-reverse': 'Items are stacked bottom to top.',
+  },
+  justifyContent: {
+    'flex-start': 'Items are packed toward the start of the main axis.',
+    center: 'Items are centred along the main axis.',
+    'flex-end': 'Items are packed toward the end of the main axis.',
+    'space-between': 'Items are evenly distributed; first item at start, last at end.',
+    'space-around': 'Items have equal space around them (half-size on edges).',
+    'space-evenly': 'Items have exactly equal space between and around them.',
+  },
+  alignItems: {
+    stretch: 'Items stretch to fill the container on the cross axis (default).',
+    'flex-start': 'Items align to the start of the cross axis.',
+    center: 'Items are centred on the cross axis.',
+    'flex-end': 'Items align to the end of the cross axis.',
+    baseline: 'Items align along their text baselines.',
+  },
+  flexWrap: {
+    nowrap: 'All items stay on one line, even if they overflow (default).',
+    wrap: 'Items wrap onto the next line when there is not enough space.',
+    'wrap-reverse': 'Items wrap onto the next line in reverse order.',
+  },
+  alignContent: {
+    normal: 'Default — no special alignment of wrapped lines.',
+    'flex-start': 'Wrapped lines are packed toward the start of the cross axis.',
+    center: 'Wrapped lines are centred on the cross axis.',
+    'flex-end': 'Wrapped lines are packed toward the end of the cross axis.',
+    'space-between': 'Wrapped lines are evenly distributed.',
+    'space-around': 'Wrapped lines have equal space around them.',
+  },
+};
+
+let flexState = {
+  flexDirection: 'row',
+  justifyContent: 'flex-start',
+  alignItems: 'stretch',
+  flexWrap: 'nowrap',
+  alignContent: 'normal',
+  gap: '12px',
+  itemCount: 3,
+};
+
+function buildItems(count) {
+  const stage = document.getElementById('flexStage');
+  // Remove existing items
+  [...stage.querySelectorAll('.flex-item')].forEach(el => el.remove());
+  for (let i = 0; i < count; i++) {
+    const div = document.createElement('div');
+    div.className = 'flex-item';
+    div.style.background = COLORS[i % COLORS.length];
+    div.textContent = i + 1;
+    stage.appendChild(div);
+  }
+}
+
+function setItems(n) {
+  flexState.itemCount = n;
+  document.querySelectorAll('[onclick^="setItems"]').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  buildItems(n);
+}
+
+function applyFlex() {
+  const stage = document.getElementById('flexStage');
+  stage.style.display = 'flex';
+  stage.style.flexDirection    = flexState.flexDirection;
+  stage.style.justifyContent   = flexState.justifyContent;
+  stage.style.alignItems       = flexState.alignItems;
+  stage.style.flexWrap         = flexState.flexWrap;
+  stage.style.alignContent     = flexState.alignContent;
+  stage.style.gap              = flexState.gap;
+
+  // Update CSS output
+  document.getElementById('flexCssOutput').textContent = `.container {
+  display: flex;
+  flex-direction: ${flexState.flexDirection};
+  justify-content: ${flexState.justifyContent};
+  align-items: ${flexState.alignItems};
+  flex-wrap: ${flexState.flexWrap};
+  align-content: ${flexState.alignContent};
+  gap: ${flexState.gap};
+}`;
+}
+
+function updateGap(val) {
+  flexState.gap = val + 'px';
+  document.getElementById('gapVal').textContent = val + 'px';
+  applyFlex();
+}
+
+// Prop buttons
+document.querySelectorAll('[data-prop]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const prop = btn.dataset.prop;
+    const val  = btn.dataset.val;
+    // Deactivate siblings
+    document.querySelectorAll(`[data-prop="${prop}"]`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    flexState[prop] = val;
+    applyFlex();
+    // Show explanation
+    const explanation = EXPLANATIONS[prop] && EXPLANATIONS[prop][val];
+    if (explanation) {
+      document.getElementById('explanationText').innerHTML = `<strong style="color:var(--accent-primary);font-family:'JetBrains Mono',monospace;">${prop}: ${val}</strong><br><br>${explanation}`;
+    }
+  });
+});
+
+function resetFlex() {
+  flexState = {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    flexWrap: 'nowrap',
+    alignContent: 'normal',
+    gap: '12px',
+    itemCount: 3,
+  };
+  document.querySelectorAll('[data-prop]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === flexState[btn.dataset.prop]);
+  });
+  document.getElementById('gapRange').value = 12;
+  document.getElementById('gapVal').textContent = '12px';
+  buildItems(3);
+  applyFlex();
+}
+
+function copyFlexCSS() {
+  navigator.clipboard.writeText(document.getElementById('flexCssOutput').textContent).then(() => {
+    const icon = document.getElementById('flexCopyIcon');
+    icon.className = 'bi bi-clipboard-check';
+    setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+  });
+}
+
+// Init
+buildItems(3);
+applyFlex();
+</script>
+{% endblock %}

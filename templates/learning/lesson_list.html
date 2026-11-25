@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lessons — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'learning:lesson_list' %}">Lessons</a></li>
+<li class="breadcrumb-item active">All Lessons</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-book"></i> Learning</div>
+  <h1 class="page-title">All Lessons</h1>
+  <p class="page-subtitle">{{ lessons.count }} lesson{{ lessons.count|pluralize }} available. Click any lesson to start learning.</p>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <a href="{% url 'learning:lesson_list' %}" class="filter-chip {% if not selected_category and not selected_difficulty %}active{% endif %}">
+    <i class="bi bi-grid-fill"></i> All
+  </a>
+  {% for val, label in category_choices %}
+  <a href="?category={{ val }}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}"
+     class="filter-chip {% if selected_category == val %}active{% endif %}">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+<div class="filter-bar">
+  <a href="{% url 'learning:lesson_list' %}{% if selected_category %}?category={{ selected_category }}{% endif %}" class="filter-chip {% if not selected_difficulty %}active{% endif %}">
+    All Levels
+  </a>
+  <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}difficulty=beginner" class="filter-chip {% if selected_difficulty == 'beginner' %}active{% endif %}">
+    <span style="color:#059669;">●</span> Beginner
+  </a>
+  <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}difficulty=intermediate" class="filter-chip {% if selected_difficulty == 'intermediate' %}active{% endif %}">
+    <span style="color:#d97706;">●</span> Intermediate
+  </a>
+  <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}difficulty=advanced" class="filter-chip {% if selected_difficulty == 'advanced' %}active{% endif %}">
+    <span style="color:#dc2626;">●</span> Advanced
+  </a>
+</div>
+
+{% if lessons %}
+<div class="row g-3">
+  {% for lesson in lessons %}
+  <div class="col-sm-6 col-lg-4 col-xl-3">
+    <a href="{% url 'learning:lesson_detail' lesson.pk %}" class="lesson-card" style="height:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="lesson-card-icon" style="margin:0;">
+          <i class="bi bi-file-earmark-code"></i>
+        </div>
+        <span class="badge-{{ lesson.difficulty }}">{{ lesson.get_difficulty_display }}</span>
+      </div>
+      <div class="lesson-card-title">{{ lesson.title }}</div>
+      <div class="lesson-card-desc">{{ lesson.description }}</div>
+      <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
+        <span class="badge-category" style="font-size:10px;">{{ lesson.get_category_display }}</span>
+        {% if lesson.pk in completed_ids %}
+        <span class="completed-badge"><i class="bi bi-check-circle-fill"></i> Done</span>
+        {% endif %}
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card-custom">
+  <div class="card-body empty-state">
+    <i class="bi bi-search"></i>
+    <p>No lessons found matching your filters.</p>
+    <a href="{% url 'learning:lesson_list' %}" class="btn-primary-custom">Clear Filters</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

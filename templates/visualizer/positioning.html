@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}CSS Positioning Visualizer — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">CSS Positioning</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.pos-stage {
+  position: relative;
+  height: 320px;
+  background: repeating-linear-gradient(45deg,#f8fafc,#f8fafc 10px,#f1f5f9 10px,#f1f5f9 20px);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--border-color-strong);
+  overflow: hidden;
+}
+
+.pos-reference {
+  width: 60px;
+  height: 60px;
+  background: rgba(100,116,139,0.3);
+  border: 2px dashed #94a3b8;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.pos-box {
+  width: 100px;
+  height: 60px;
+  background: var(--accent-gradient);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+  transition: all 0.4s ease;
+  cursor: default;
+  user-select: none;
+}
+
+.pos-box small {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.85;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.mode-card {
+  padding: 14px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: 8px;
+}
+
+.mode-card:hover { border-color: var(--accent-primary); background: rgba(99,102,241,0.04); }
+.mode-card.active { border-color: var(--accent-primary); background: rgba(99,102,241,0.08); }
+.mode-card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+.mode-card-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-arrows-move"></i> CSS</div>
+  <h1 class="page-title">CSS Positioning Visualizer</h1>
+  <p class="page-subtitle">Select a positioning mode and adjust offsets to see exactly how elements are placed.</p>
+</div>
+
+<div class="row g-4">
+  <!-- Left: Mode selector + controls -->
+  <div class="col-lg-4">
+    <div class="card-custom mb-3">
+      <div class="card-header"><i class="bi bi-cursor me-2 text-accent"></i>Position Mode</div>
+      <div class="card-body">
+        <div id="modeCard-static" class="mode-card active" onclick="setMode('static')">
+          <div class="mode-card-title">position: static</div>
+          <div class="mode-card-desc">Default. Element is in normal document flow. Offsets have no effect.</div>
+        </div>
+        <div id="modeCard-relative" class="mode-card" onclick="setMode('relative')">
+          <div class="mode-card-title">position: relative</div>
+          <div class="mode-card-desc">Element stays in flow but shifts relative to its normal position.</div>
+        </div>
+        <div id="modeCard-absolute" class="mode-card" onclick="setMode('absolute')">
+          <div class="mode-card-title">position: absolute</div>
+          <div class="mode-card-desc">Removed from flow. Positioned relative to nearest positioned ancestor.</div>
+        </div>
+        <div id="modeCard-fixed" class="mode-card" onclick="setMode('fixed')">
+          <div class="mode-card-title">position: fixed</div>
+          <div class="mode-card-desc">Removed from flow. Fixed relative to the browser viewport.</div>
+        </div>
+        <div id="modeCard-sticky" class="mode-card" onclick="setMode('sticky')">
+          <div class="mode-card-title">position: sticky</div>
+          <div class="mode-card-desc">Acts like relative until scroll threshold, then sticks like fixed.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-custom">
+      <div class="card-header"><i class="bi bi-sliders me-2 text-accent"></i>Offset Values</div>
+      <div class="card-body" id="offsetControls">
+        <div class="control-row">
+          <span class="control-label">top</span>
+          <input type="range" id="posTop" min="-100" max="200" value="0" oninput="updatePos()">
+          <span class="control-value" id="posTopVal">0px</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">left</span>
+          <input type="range" id="posLeft" min="-100" max="400" value="0" oninput="updatePos()">
+          <span class="control-value" id="posLeftVal">0px</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">right</span>
+          <input type="range" id="posRight" min="-100" max="400" value="auto" oninput="updatePos()">
+          <span class="control-value" id="posRightVal">auto</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">bottom</span>
+          <input type="range" id="posBottom" min="-100" max="200" value="auto" oninput="updatePos()">
+          <span class="control-value" id="posBottomVal">auto</span>
+        </div>
+        <p id="staticNote" style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+          <i class="bi bi-info-circle"></i> static elements ignore offset properties.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Stage + Code -->
+  <div class="col-lg-8">
+
+    <!-- Stage -->
+    <div class="card-custom mb-4">
+      <div class="card-header"><span class="viz-card-title"><i class="bi bi-eye"></i>Visual Preview</span></div>
+      <div class="card-body">
+        <div class="pos-stage" id="posStage">
+          <!-- Reference elements -->
+          <div style="position:absolute;top:20px;left:20px;" class="pos-reference">Item 1</div>
+          <div style="position:absolute;top:20px;left:100px;" class="pos-reference">Item 2</div>
+          <div style="position:absolute;top:20px;left:180px;" class="pos-reference">Item 3</div>
+          <!-- Positioned box -->
+          <div class="pos-box" id="posBox">
+            <span>Box</span>
+            <small id="posLabel">static</small>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:10px;text-align:center;">
+          <i class="bi bi-info-circle"></i> Grey dashed boxes show the normal document flow reference.
+        </p>
+      </div>
+    </div>
+
+    <!-- Generated CSS -->
+    <div class="card-custom">
+      <div class="card-header">
+        <span class="viz-card-title"><i class="bi bi-code-slash"></i>Generated CSS</span>
+        <button class="btn-icon" onclick="copyPosCSS()" title="Copy CSS">
+          <i class="bi bi-clipboard" id="posCopyIcon"></i>
+        </button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="code-block" style="border-radius:0 0 var(--radius-lg) var(--radius-lg);box-shadow:none;">
+          <div class="code-content">
+            <pre><code id="posCssOutput"></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentMode = 'static';
+let posTop = 0, posLeft = 0;
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('[id^="modeCard-"]').forEach(c => c.classList.remove('active'));
+  document.getElementById('modeCard-' + mode).classList.add('active');
+
+  const isStatic = mode === 'static';
+  document.getElementById('offsetControls').style.opacity = isStatic ? '0.4' : '1';
+  document.getElementById('staticNote').style.display = isStatic ? 'block' : 'none';
+
+  updatePos();
+}
+
+function updatePos() {
+  const mode   = currentMode;
+  const top    = parseInt(document.getElementById('posTop').value);
+  const left   = parseInt(document.getElementById('posLeft').value);
+  const box    = document.getElementById('posBox');
+
+  document.getElementById('posTopVal').textContent   = top + 'px';
+  document.getElementById('posLeftVal').textContent  = left + 'px';
+
+  box.style.position = mode;
+
+  if (mode === 'static') {
+    box.style.top = '';
+    box.style.left = '';
+    box.style.bottom = '';
+    box.style.right = '';
+    // Place inline
+    box.style.marginTop  = '100px';
+    box.style.marginLeft = '120px';
+  } else {
+    box.style.marginTop  = '';
+    box.style.marginLeft = '';
+    box.style.top  = top + 'px';
+    box.style.left = left + 'px';
+    box.style.bottom = '';
+    box.style.right = '';
+  }
+
+  document.getElementById('posLabel').textContent = mode;
+
+  const css = `.box {
+  position: ${mode};${mode !== 'static' ? `
+  top: ${top}px;
+  left: ${left}px;` : ''}
+}
+
+${mode === 'absolute' ? `/* Parent must have position: relative */
+.parent {
+  position: relative;
+}` : ''}
+${mode === 'sticky' ? `/* Element sticks when scrolled to this offset */
+.box {
+  position: sticky;
+  top: ${top}px;
+}` : ''}`;
+
+  document.getElementById('posCssOutput').textContent = css;
+}
+
+function copyPosCSS() {
+  navigator.clipboard.writeText(document.getElementById('posCssOutput').textContent).then(() => {
+    const icon = document.getElementById('posCopyIcon');
+    icon.className = 'bi bi-clipboard-check';
+    setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+  });
+}
+
+updatePos();
+</script>
+{% endblock %}

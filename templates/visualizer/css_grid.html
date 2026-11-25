@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}CSS Grid Visualizer — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">CSS Grid</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.grid-stage {
+  min-height: 320px;
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--border-color-strong);
+  background: var(--bg-muted);
+  padding: 16px;
+  transition: all 0.4s ease;
+}
+
+.grid-cell {
+  border-radius: 8px;
+  background: var(--accent-gradient);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.4s ease;
+  min-height: 60px;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+}
+
+.prop-row { margin-bottom: 16px; }
+.prop-row-label { font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em; }
+.prop-btn { padding:5px 12px;border:1px solid var(--border-color);border-radius:var(--radius-full);background:var(--bg-card);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all var(--transition-fast);font-family:'JetBrains Mono',monospace; }
+.prop-btn:hover,.prop-btn.active { background:rgba(99,102,241,0.1);border-color:var(--accent-primary);color:var(--accent-primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-grid-3x3"></i> CSS</div>
+  <h1 class="page-title">CSS Grid Visualizer</h1>
+  <p class="page-subtitle">Build grid layouts interactively. Adjust columns, rows, and gaps to see how grid cells arrange.</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card-custom mb-3">
+      <div class="card-header"><i class="bi bi-toggles me-2 text-accent"></i>Grid Properties</div>
+      <div class="card-body">
+
+        <div class="prop-row">
+          <div class="prop-row-label">grid-template-columns</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="prop-btn" data-cols="1fr">1fr</button>
+            <button class="prop-btn active" data-cols="1fr 1fr">1fr 1fr</button>
+            <button class="prop-btn" data-cols="1fr 1fr 1fr">1fr 1fr 1fr</button>
+            <button class="prop-btn" data-cols="1fr 1fr 1fr 1fr">1fr × 4</button>
+            <button class="prop-btn" data-cols="2fr 1fr">2fr 1fr</button>
+            <button class="prop-btn" data-cols="1fr 2fr 1fr">1fr 2fr 1fr</button>
+            <button class="prop-btn" data-cols="repeat(3, 1fr)">repeat(3,1fr)</button>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">Number of Rows</div>
+          <div class="control-row">
+            <input type="range" id="rowCount" min="1" max="4" value="2" oninput="updateGrid()">
+            <span class="control-value" id="rowCountVal">2</span>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">gap</div>
+          <div class="control-row">
+            <input type="range" id="gridGap" min="0" max="40" value="12" oninput="updateGrid()">
+            <span class="control-value" id="gridGapVal">12px</span>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">justify-items</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="prop-btn active" data-ji="stretch">stretch</button>
+            <button class="prop-btn" data-ji="start">start</button>
+            <button class="prop-btn" data-ji="center">center</button>
+            <button class="prop-btn" data-ji="end">end</button>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-row-label">align-items</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="prop-btn active" data-ai="stretch">stretch</button>
+            <button class="prop-btn" data-ai="start">start</button>
+            <button class="prop-btn" data-ai="center">center</button>
+            <button class="prop-btn" data-ai="end">end</button>
+          </div>
+        </div>
+
+        <button class="btn-danger-custom" onclick="resetGrid()" style="width:100%;justify-content:center;">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card-custom mb-4">
+      <div class="card-header"><span class="viz-card-title"><i class="bi bi-eye"></i>Visual Preview</span></div>
+      <div class="card-body">
+        <div class="grid-stage" id="gridStage"></div>
+      </div>
+    </div>
+
+    <div class="card-custom">
+      <div class="card-header">
+        <span class="viz-card-title"><i class="bi bi-code-slash"></i>Generated CSS</span>
+        <button class="btn-icon" onclick="copyGridCSS()" title="Copy CSS">
+          <i class="bi bi-clipboard" id="gridCopyIcon"></i>
+        </button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="code-block" style="border-radius:0 0 var(--radius-lg) var(--radius-lg);box-shadow:none;">
+          <div class="code-content">
+            <pre><code id="gridCssOutput"></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let gridState = {
+  columns: '1fr 1fr',
+  rows: 2,
+  gap: 12,
+  justifyItems: 'stretch',
+  alignItems: 'stretch',
+};
+
+const CELL_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#f97316','#14b8a6'];
+
+function countCols(colsStr) {
+  // Count number of tracks
+  if (colsStr.startsWith('repeat(')) {
+    const m = colsStr.match(/repeat\((\d+)/);
+    return m ? parseInt(m[1]) : 1;
+  }
+  return colsStr.trim().split(/\s+/).length;
+}
+
+function updateGrid() {
+  gridState.rows = parseInt(document.getElementById('rowCount').value);
+  gridState.gap  = parseInt(document.getElementById('gridGap').value);
+  document.getElementById('rowCountVal').textContent = gridState.rows;
+  document.getElementById('gridGapVal').textContent  = gridState.gap + 'px';
+  renderGrid();
+}
+
+function renderGrid() {
+  const stage = document.getElementById('gridStage');
+  stage.style.display            = 'grid';
+  stage.style.gridTemplateColumns = gridState.columns;
+  stage.style.gridTemplateRows   = `repeat(${gridState.rows}, auto)`;
+  stage.style.gap                = gridState.gap + 'px';
+  stage.style.justifyItems       = gridState.justifyItems;
+  stage.style.alignItems         = gridState.alignItems;
+
+  const colCount = countCols(gridState.columns);
+  const cellCount = colCount * gridState.rows;
+  stage.innerHTML = '';
+  for (let i = 0; i < cellCount; i++) {
+    const div = document.createElement('div');
+    div.className = 'grid-cell';
+    div.style.background = CELL_COLORS[i % CELL_COLORS.length];
+    div.style.boxShadow  = `0 2px 8px ${CELL_COLORS[i % CELL_COLORS.length]}55`;
+    div.textContent = i + 1;
+    stage.appendChild(div);
+  }
+
+  document.getElementById('gridCssOutput').textContent = `.grid-container {
+  display: grid;
+  grid-template-columns: ${gridState.columns};
+  grid-template-rows: repeat(${gridState.rows}, auto);
+  gap: ${gridState.gap}px;
+  justify-items: ${gridState.justifyItems};
+  align-items: ${gridState.alignItems};
+}
+
+.grid-item {
+  /* each child is automatically placed in a grid cell */
+  padding: 20px;
+  border-radius: 8px;
+}`;
+}
+
+// Column buttons
+document.querySelectorAll('[data-cols]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-cols]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gridState.columns = btn.dataset.cols;
+    renderGrid();
+  });
+});
+
+// justify-items buttons
+document.querySelectorAll('[data-ji]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-ji]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gridState.justifyItems = btn.dataset.ji;
+    renderGrid();
+  });
+});
+
+// align-items buttons
+document.querySelectorAll('[data-ai]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-ai]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gridState.alignItems = btn.dataset.ai;
+    renderGrid();
+  });
+});
+
+function resetGrid() {
+  gridState = { columns: '1fr 1fr', rows: 2, gap: 12, justifyItems: 'stretch', alignItems: 'stretch' };
+  document.getElementById('rowCount').value = 2;
+  document.getElementById('gridGap').value  = 12;
+  document.getElementById('rowCountVal').textContent = '2';
+  document.getElementById('gridGapVal').textContent  = '12px';
+  document.querySelectorAll('[data-cols]').forEach(b => b.classList.toggle('active', b.dataset.cols === '1fr 1fr'));
+  document.querySelectorAll('[data-ji]').forEach(b => b.classList.toggle('active', b.dataset.ji === 'stretch'));
+  document.querySelectorAll('[data-ai]').forEach(b => b.classList.toggle('active', b.dataset.ai === 'stretch'));
+  renderGrid();
+}
+
+function copyGridCSS() {
+  navigator.clipboard.writeText(document.getElementById('gridCssOutput').textContent).then(() => {
+    const icon = document.getElementById('gridCopyIcon');
+    icon.className = 'bi bi-clipboard-check';
+    setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+  });
+}
+
+renderGrid();
+</script>
+{% endblock %}

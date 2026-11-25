@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ exercise.title }} — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'practice:exercise_list' %}">Exercises</a></li>
+<li class="breadcrumb-item active">{{ exercise.title }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Editor tabs ───────────────────────────── */
+.ex-tabs {
+  display: flex;
+  background: #1a1a2e;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  overflow: hidden;
+  border: 1px solid #2d2d44;
+  border-bottom: none;
+}
+.ex-tab {
+  padding: 11px 22px;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color .15s, background .15s;
+  border-bottom: 2px solid transparent;
+}
+.ex-tab.active {
+  color: #fff;
+  background: rgba(255,255,255,0.07);
+  border-bottom: 2px solid #6366f1;
+}
+.ex-tab:hover:not(.active) { color: #ccc; background: rgba(255,255,255,0.04); }
+
+/* ── Code textarea ─────────────────────────── */
+.code-textarea {
+  width: 100%;
+  height: 320px;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 13.5px;
+  line-height: 1.65;
+  padding: 16px 18px;
+  border: 1px solid #2d2d44;
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  tab-size: 2;
+  display: block;
+}
+.code-textarea:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+}
+
+/* ── Feedback ──────────────────────────────── */
+.feedback-box {
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-top: 16px;
+  display: none;
+  animation: fadeIn .25s ease;
+}
+.feedback-box.success {
+  background: #d1fae5;
+  border: 1px solid #34d399;
+  color: #064e3b;
+}
+.feedback-box.error {
+  background: #fee2e2;
+  border: 1px solid #f87171;
+  color: #7f1d1d;
+}
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  flex-wrap: wrap;
+}
+.found-val { color: #6366f1; font-weight: 600; }
+.tip-box {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-family: sans-serif;
+}
+
+/* ── Preview iframe ────────────────────────── */
+#exPreviewFrame {
+  width: 100%;
+  height: 380px;
+  min-height: 320px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: #f1f5f9;
+  display: block;
+}
+
+/* ── Line numbers hint ─────────────────────── */
+.editor-hint {
+  font-size: 11px;
+  color: #888;
+  padding: 4px 18px;
+  background: #16162a;
+  border: 1px solid #2d2d44;
+  border-top: none;
+  border-bottom: none;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+</style>
+{% endblock %}
+
+{{ exercise.starter_html|default:""|json_script:"starter-html-data" }}
+{{ exercise.starter_css|default:""|json_script:"starter-css-data" }}
+{{ exercise.expected_properties|default:"{}"|json_script:"expected-props-data" }}
+
+{% block content %}
+<div class="page-header">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+    <span class="badge-category">{{ exercise.get_category_display }}</span>
+    <span class="badge-{{ exercise.difficulty }}">{{ exercise.get_difficulty_display }}</span>
+  </div>
+  <h1 class="page-title">{{ exercise.title }}</h1>
+  <p class="page-subtitle">{{ exercise.description }}</p>
+</div>
+
+<div class="row g-4">
+
+  <!-- LEFT: Instructions + Editor -->
+  <div class="col-lg-7">
+
+    <!-- Instructions -->
+    <div class="card-custom mb-4">
+      <div class="card-header">
+        <i class="bi bi-clipboard-check me-2 text-accent"></i>Challenge Instructions
+      </div>
+      <div class="card-body">
+        <p style="font-size:14.5px;color:var(--text-secondary);line-height:1.8;margin-bottom:{% if exercise.expected_properties %}16px{% else %}0{% endif %};">
+          {{ exercise.instructions }}
+        </p>
+        {% if exercise.expected_properties %}
+        <div class="info-box" style="margin-bottom:0;">
+          <h4 style="margin-bottom:10px;">🎯 CSS properties to match</h4>
+          {% for prop, val in exercise.expected_properties.items %}
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;margin-bottom:5px;
+                      padding:5px 10px;background:rgba(99,102,241,.07);border-radius:5px;display:inline-block;margin-right:6px;">
+            <span style="color:var(--accent-primary);">{{ prop }}</span>:
+            <span style="color:#059669;font-weight:600;">{{ val }}</span>;
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Code Editor -->
+    <div>
+      <!-- Tabs -->
+      <div class="ex-tabs">
+        <button class="ex-tab active" id="tabHtml" onclick="switchTab('html')">
+          <i class="bi bi-filetype-html" style="color:#e44d26;"></i> HTML
+        </button>
+        <button class="ex-tab" id="tabCss" onclick="switchTab('css')">
+          <i class="bi bi-filetype-css" style="color:#264de4;"></i> CSS
+        </button>
+      </div>
+      <div class="editor-hint">Tab = 2 spaces &nbsp;|&nbsp; Ctrl+A = select all</div>
+
+      <!-- HTML textarea -->
+      <textarea
+        id="htmlEditor"
+        class="code-textarea"
+        spellcheck="false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        placeholder="Write your HTML here..."></textarea>
+
+      <!-- CSS textarea (hidden by default) -->
+      <textarea
+        id="cssEditor"
+        class="code-textarea"
+        style="display:none;"
+        spellcheck="false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        placeholder="Write your CSS here..."></textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+      <button class="btn-primary-custom" onclick="checkAnswer()" id="checkBtn">
+        <i class="bi bi-check-circle"></i> Check Answer
+      </button>
+      <button class="btn-secondary-custom" onclick="refreshPreview()">
+        <i class="bi bi-eye"></i> Preview
+      </button>
+      <button class="btn-danger-custom" onclick="resetExercise()">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset
+      </button>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedbackBox" class="feedback-box">
+      <div id="feedbackContent"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Live Preview -->
+  <div class="col-lg-5">
+    <div class="card-custom" style="position:sticky;top:calc(var(--navbar-height,60px) + 20px);overflow:hidden;">
+      <div class="card-header">
+        <i class="bi bi-display me-2 text-accent"></i>Live Preview
+        <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">updates as you type</span>
+      </div>
+      <div class="card-body" style="background:var(--bg-muted);border-radius:0 0 var(--radius-lg) var(--radius-lg);padding:16px;">
+        <iframe id="exPreviewFrame" sandbox="allow-scripts allow-same-origin" title="Exercise preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Load starter code ──────────────────── */
+const STARTER_HTML = JSON.parse(document.getElementById('starter-html-data').textContent);
+const STARTER_CSS  = JSON.parse(document.getElementById('starter-css-data').textContent);
+const EXPECTED_PROPS = JSON.parse(document.getElementById('expected-props-data').textContent || '{}');
+
+const htmlEd = document.getElementById('htmlEditor');
+const cssEd  = document.getElementById('cssEditor');
+
+htmlEd.value = STARTER_HTML;
+cssEd.value  = STARTER_CSS;
+
+/* ── Tab handling ───────────────────────── */
+function switchTab(tab) {
+  htmlEd.style.display      = tab === 'html' ? 'block' : 'none';
+  cssEd.style.display       = tab === 'css'  ? 'block' : 'none';
+  document.getElementById('tabHtml').classList.toggle('active', tab === 'html');
+  document.getElementById('tabCss').classList.toggle('active',  tab === 'css');
+}
+
+/* ── Live preview ───────────────────────── */
+function refreshPreview() {
+  const h = htmlEd ? htmlEd.value : '';
+  const c = cssEd ? cssEd.value : '';
+  const iframe = document.getElementById('exPreviewFrame');
+  if (!iframe) return;
+
+  iframe.srcdoc =
+    `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 24px;
+      margin: 0;
+      background: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    ${c}
+  </style>
+</head>
+<body>${h}</body>
+</html>`;
+}
+
+/* Auto-update on typing */
+let _timer;
+htmlEd.addEventListener('input', () => { clearTimeout(_timer); _timer = setTimeout(refreshPreview, 250); });
+cssEd.addEventListener('input',  () => { clearTimeout(_timer); _timer = setTimeout(refreshPreview, 250); });
+
+/* Tab key → insert 2 spaces instead of leaving the textarea */
+[htmlEd, cssEd].forEach(ta => {
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = ta.selectionStart;
+      const end   = ta.selectionEnd;
+      ta.value = ta.value.slice(0, start) + '  ' + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = start + 2;
+      clearTimeout(_timer);
+      _timer = setTimeout(refreshPreview, 250);
+    }
+  });
+});
+
+/* Helper to normalize CSS value */
+function normalizeCssValue(val) {
+  if (!val) return '';
+  return String(val)
+    .trim()
+    .toLowerCase()
+    .replace(/;+$/, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([(),])\s*/g, '$1')
+    .replace(/0\./g, '.');
+}
+
+/* Client-side check in case backend is offline */
+function evaluateCssLocally(submittedCss) {
+  const results = {};
+  let all_correct = true;
+
+  for (const [prop, expected_val] of Object.entries(EXPECTED_PROPS)) {
+    // Regex looking for prop: value
+    const escaped = prop.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped + '\\s*:\\s*([^;}]+)', 'i');
+    const match = regex.exec(submittedCss);
+
+    if (match) {
+      const found_val = match[1].trim();
+      const normFound = normalizeCssValue(found_val);
+      const normExp   = normalizeCssValue(expected_val);
+      const correct   = normFound === normExp;
+      results[prop] = { correct, found: found_val, expected: expected_val };
+      if (!correct) all_correct = false;
+    } else {
+      results[prop] = { correct: false, found: null, expected: expected_val };
+      all_correct = false;
+    }
+  }
+
+  return { all_correct, results };
+}
+
+/* Render feedback UI */
+function renderFeedback(data) {
+  const box     = document.getElementById('feedbackBox');
+  const content = document.getElementById('feedbackContent');
+
+  // Check if student mistakenly pasted CSS in the HTML editor
+  const htmlContent = htmlEd.value.trim();
+  const looksLikeCssInHtml = !htmlContent.includes('<') && (
+    htmlContent.includes(':') && (htmlContent.includes(';') || htmlContent.includes('{'))
+  );
+
+  let warningHtml = '';
+  if (looksLikeCssInHtml) {
+    warningHtml = `
+      <div style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:12px;border-radius:6px;margin-bottom:14px;font-size:13.5px;">
+        ⚠️ <strong>Notice:</strong> It looks like CSS code was typed into the <strong>HTML</strong> tab!
+        <br>Click the <strong>CSS</strong> tab to write styles, and click <strong>Reset</strong> if you need to restore your HTML element (e.g. <code>&lt;div class="box"&gt;</code>).
+      </div>
+    `;
+  }
+
+  if (data.all_correct) {
+    box.className = 'feedback-box success';
+    content.innerHTML = warningHtml + `
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px;">🎉 Perfect! All properties match!</div>
+      <p style="font-size:14px;margin:0;">Great work! You solved this challenge successfully. Try the next exercise!</p>`;
+  } else {
+    box.className = 'feedback-box error';
+    let rows = '<div style="font-size:14px;font-weight:700;margin-bottom:12px;">❌ Not quite — check the requirements below:</div>';
+    const results = data.results || {};
+    for (const [prop, result] of Object.entries(results)) {
+      const icon  = result.correct ? '✅' : '❌';
+      const found = result.found
+        ? `found <span class="found-val">${result.found}</span>`
+        : '<span style="color:#ef4444;font-weight:600;">not found in CSS tab</span>';
+      rows += `<div class="check-row">${icon}&nbsp;<strong>${prop}:&nbsp;${result.expected}</strong>&nbsp;— ${found}</div>`;
+    }
+    rows += `<div class="tip-box">💡 Click the <strong>CSS tab</strong> above, add or fix the required CSS property inside the selector, and click <strong>Check Answer</strong> again.</div>`;
+    content.innerHTML = warningHtml + rows;
+  }
+
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ── Check Answer ───────────────────────── */
+function checkAnswer() {
+  const btn = document.getElementById('checkBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Checking...';
+
+  // Timeout controller: if server doesn't respond in 1.5s, evaluate locally so button NEVER hangs!
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+  fetch("{% url 'practice:check_answer' exercise.pk %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ css: cssEd.value }),
+    signal: controller.signal,
+  })
+  .then(async response => {
+    clearTimeout(timeoutId);
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    return response.json();
+  })
+  .then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check-circle"></i> Check Answer';
+    renderFeedback(data);
+  })
+  .catch(err => {
+    clearTimeout(timeoutId);
+    console.warn('Backend check timed out or unreachable. Falling back to local check:', err);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check-circle"></i> Check Answer';
+    // Local fallback check
+    const localData = evaluateCssLocally(cssEd.value);
+    renderFeedback(localData);
+  });
+}
+
+/* ── Reset ──────────────────────────────── */
+function resetExercise() {
+  htmlEd.value = STARTER_HTML;
+  cssEd.value  = STARTER_CSS;
+  document.getElementById('feedbackBox').style.display = 'none';
+  refreshPreview();
+}
+
+/* Initial preview on load */
+setTimeout(refreshPreview, 100);
+</script>
+{% endblock %}

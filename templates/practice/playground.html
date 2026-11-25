@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Code Playground — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Code Playground</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Full-height playground layout */
+.playground-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--navbar-height) - 80px);
+  min-height: 600px;
+}
+
+.playground-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.playground-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
+}
+
+.editor-panel {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.editor-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background: var(--bg-muted);
+}
+
+.editor-tab {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.editor-tab.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+  background: white;
+}
+
+.editor-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.cm-editor-wrap {
+  height: 100%;
+  overflow: auto;
+}
+
+/* CodeMirror overrides */
+.cm-editor {
+  height: 100%;
+  font-size: 14px;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.cm-scroller { overflow: auto; }
+
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: white;
+}
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-muted);
+  flex-shrink: 0;
+}
+
+.preview-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-sizes {
+  display: flex;
+  gap: 4px;
+}
+
+.size-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: white;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.size-btn:hover, .size-btn.active {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(99,102,241,0.08);
+}
+
+.preview-frame-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  background: var(--bg-muted);
+  padding: 10px;
+}
+
+#previewIframe {
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  transition: width 0.3s ease;
+  background: white;
+}
+
+@media (max-width: 768px) {
+  .playground-body { grid-template-columns: 1fr; }
+  .editor-panel { height: 50%; }
+  .preview-panel { height: 50%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div class="page-tag"><i class="bi bi-terminal"></i> Playground</div>
+      <h1 class="page-title" style="margin-bottom:2px;">Code Playground</h1>
+    </div>
+    {% if user.is_authenticated %}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-secondary-custom" id="saveProjectBtn" onclick="saveProject()" style="font-size:13px;padding:8px 14px;">
+        <i class="bi bi-cloud-upload"></i> Save
+      </button>
+      <a href="{% url 'practice:my_projects' %}" class="btn-secondary-custom" style="font-size:13px;padding:8px 14px;">
+        <i class="bi bi-folder2-open"></i> My Projects
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="playground-wrapper">
+  <!-- Toolbar -->
+  <div class="playground-toolbar">
+    <button class="btn-nav-primary" id="runBtn" onclick="runCode()" style="padding:7px 16px;font-size:13px;">
+      <i class="bi bi-play-fill"></i> Run
+    </button>
+    <button class="btn-secondary-custom" onclick="resetCode()" style="font-size:13px;padding:7px 14px;">
+      <i class="bi bi-arrow-counterclockwise"></i> Reset
+    </button>
+    <button class="btn-secondary-custom" onclick="formatCode()" style="font-size:13px;padding:7px 14px;">
+      <i class="bi bi-braces"></i> Format
+    </button>
+
+    <div style="flex:1;"></div>
+
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-size:12px;color:var(--text-muted);">Auto-run:</span>
+      <label class="d-flex align-items-center gap-2" style="cursor:pointer;margin:0;">
+        <input type="checkbox" id="autoRunToggle" checked style="cursor:pointer;">
+        <span style="font-size:12px;font-weight:500;color:var(--text-secondary);">On</span>
+      </label>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-size:12px;color:var(--text-muted);">Theme:</span>
+      <select id="themeSelect" class="form-select form-select-sm" style="width:auto;font-size:12px;" onchange="changeTheme()">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Main body -->
+  <div class="playground-body">
+    <!-- Left: Editors -->
+    <div class="editor-panel">
+      <div class="editor-tabs">
+        <button class="editor-tab active" id="htmlTab" onclick="showTab('html')">
+          <i class="bi bi-filetype-html" style="color:#e44d26;"></i> HTML
+        </button>
+        <button class="editor-tab" id="cssTab" onclick="showTab('css')">
+          <i class="bi bi-filetype-css" style="color:#264de4;"></i> CSS
+        </button>
+      </div>
+      <div class="editor-area">
+        <div id="htmlEditorWrap" class="cm-editor-wrap"></div>
+        <div id="cssEditorWrap"  class="cm-editor-wrap" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Right: Preview -->
+    <div class="preview-panel">
+      <div class="preview-toolbar">
+        <div class="preview-label"><i class="bi bi-eye"></i> Preview</div>
+        <div class="preview-sizes">
+          <button class="size-btn active" id="sizeDesktop" onclick="setPreviewSize('desktop')" title="Desktop">
+            <i class="bi bi-display"></i> Desktop
+          </button>
+          <button class="size-btn" id="sizeTablet" onclick="setPreviewSize('tablet')" title="Tablet">
+            <i class="bi bi-tablet"></i> Tablet
+          </button>
+          <button class="size-btn" id="sizeMobile" onclick="setPreviewSize('mobile')" title="Mobile">
+            <i class="bi bi-phone"></i> Mobile
+          </button>
+        </div>
+      </div>
+      <div class="preview-frame-wrap">
+        <iframe id="previewIframe"
+                sandbox="allow-scripts allow-same-origin"
+                title="Code preview"
+                style="width:100%;height:100%;"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Save Modal -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="saveModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none;box-shadow:var(--shadow-lg);">
+      <div class="modal-header" style="border-bottom:1px solid var(--border-color);padding:16px 20px;">
+        <h5 class="modal-title" style="font-size:16px;font-weight:700;">Save Project</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:20px;">
+        <label class="form-label">Project Name</label>
+        <input type="text" class="form-control" id="projectNameInput" placeholder="My Awesome Page">
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--border-color);padding:12px 20px;">
+        <button class="btn-secondary-custom" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-primary-custom" onclick="confirmSave()">
+          <i class="bi bi-cloud-upload"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- CodeMirror 6 via CDN -->
+<script type="module">
+  import { EditorState, Compartment } from "https://esm.sh/@codemirror/state@6";
+  import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection } from "https://esm.sh/@codemirror/view@6";
+  import { defaultKeymap, historyKeymap, history, indentWithTab } from "https://esm.sh/@codemirror/commands@6";
+  import { html } from "https://esm.sh/@codemirror/lang-html@6";
+  import { css  } from "https://esm.sh/@codemirror/lang-css@6";
+  import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6";
+  import { autocompletion } from "https://esm.sh/@codemirror/autocomplete@6";
+  import { bracketMatching, indentOnInput, foldGutter, foldKeymap } from "https://esm.sh/@codemirror/language@6";
+
+  const DEFAULT_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Page</title>
+</head>
+<body>
+  <div class="container">
+    <h1>Hello, World! 👋</h1>
+    <p>Start editing the HTML and CSS to see your changes live.</p>
+    <button class="btn">Click Me</button>
+  </div>
+</body>
+</html>`;
+
+  const DEFAULT_CSS = `* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 40px 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  background: white;
+  padding: 48px 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+}
+
+h1 {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+p {
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99,102,241,0.5);
+}`;
+
+  const themeCompartment = new Compartment();
+
+  function makeEditor(parent, langExt, initialContent) {
+    const startState = EditorState.create({
+      doc: initialContent,
+      extensions: [
+        history(),
+        keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap, indentWithTab]),
+        lineNumbers(),
+        drawSelection(),
+        highlightActiveLine(),
+        indentOnInput(),
+        bracketMatching(),
+        foldGutter(),
+        autocompletion(),
+        langExt,
+        themeCompartment.of([]),
+        EditorView.updateListener.of(update => {
+          if (update.docChanged && window._autoRun) {
+            clearTimeout(window._autoRunTimer);
+            window._autoRunTimer = setTimeout(() => window.runPreview(), 600);
+          }
+        }),
+        EditorView.lineWrapping,
+      ],
+    });
+    return new EditorView({ state: startState, parent });
+  }
+
+  window._htmlEditor = makeEditor(
+    document.getElementById('htmlEditorWrap'),
+    html(),
+    DEFAULT_HTML
+  );
+
+  window._cssEditor = makeEditor(
+    document.getElementById('cssEditorWrap'),
+    css(),
+    DEFAULT_CSS
+  );
+
+  window.runPreview = function() {
+    const htmlCode = window._htmlEditor.state.doc.toString();
+    const cssCode  = window._cssEditor.state.doc.toString();
+    const iframe   = document.getElementById('previewIframe');
+
+    // Inject CSS into the HTML document
+    let combined = htmlCode;
+    if (combined.includes('</head>')) {
+      combined = combined.replace('</head>', `<style>${cssCode}</style>\n</head>`);
+    } else {
+      combined = `<style>${cssCode}</style>\n` + combined;
+    }
+    iframe.srcdoc = combined;
+  };
+
+  window.getEditorContent = function() {
+    return {
+      html: window._htmlEditor.state.doc.toString(),
+      css:  window._cssEditor.state.doc.toString(),
+    };
+  };
+
+  window.setEditorContent = function(htmlCode, cssCode) {
+    if (htmlCode !== undefined) {
+      window._htmlEditor.dispatch({
+        changes: { from: 0, to: window._htmlEditor.state.doc.length, insert: htmlCode },
+      });
+    }
+    if (cssCode !== undefined) {
+      window._cssEditor.dispatch({
+        changes: { from: 0, to: window._cssEditor.state.doc.length, insert: cssCode },
+      });
+    }
+    window.runPreview();
+  };
+
+  window.changeTheme = function() {
+    const theme = document.getElementById('themeSelect').value;
+    const ext   = theme === 'dark' ? oneDark : [];
+    window._htmlEditor.dispatch({ effects: themeCompartment.reconfigure(ext) });
+    window._cssEditor.dispatch( { effects: themeCompartment.reconfigure(ext) });
+    document.getElementById('htmlEditorWrap').style.background = theme === 'dark' ? '#282c34' : '';
+    document.getElementById('cssEditorWrap').style.background  = theme === 'dark' ? '#282c34' : '';
+  };
+
+  window.resetCode = function() {
+    window.setEditorContent(DEFAULT_HTML, DEFAULT_CSS);
+  };
+
+  window._autoRun = true;
+  window.runPreview();
+
+  // Handle query param pre-load (from lesson "Try in Playground")
+  const params = new URLSearchParams(location.search);
+  if (params.has('html')) {
+    window._htmlEditor.dispatch({
+      changes: { from: 0, to: window._htmlEditor.state.doc.length, insert: decodeURIComponent(params.get('html')) }
+    });
+    window.runPreview();
+  }
+</script>
+
+<script>
+// Non-module fallbacks and UI controls
+
+function showTab(tab) {
+  document.getElementById('htmlEditorWrap').style.display = tab === 'html' ? 'block' : 'none';
+  document.getElementById('cssEditorWrap').style.display  = tab === 'css'  ? 'block' : 'none';
+  document.getElementById('htmlTab').classList.toggle('active', tab === 'html');
+  document.getElementById('cssTab').classList.toggle('active', tab === 'css');
+}
+
+function runCode() {
+  window.runPreview && window.runPreview();
+}
+
+function formatCode() {
+  // Simple tidy up — no external formatter needed
+  alert('Auto-format is not available in this version. Use Ctrl+Z to undo changes.');
+}
+
+function setPreviewSize(size) {
+  const iframe = document.getElementById('previewIframe');
+  const sizes = { desktop: '100%', tablet: '768px', mobile: '375px' };
+  iframe.style.width = sizes[size] || '100%';
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('size' + size.charAt(0).toUpperCase() + size.slice(1)).classList.add('active');
+}
+
+document.getElementById('autoRunToggle').addEventListener('change', e => {
+  window._autoRun = e.target.checked;
+});
+
+// Save project
+let currentProjectId = null;
+
+function saveProject() {
+  const modal = new bootstrap.Modal(document.getElementById('saveModal'));
+  modal.show();
+}
+
+function confirmSave() {
+  const name = document.getElementById('projectNameInput').value.trim() || 'Untitled Project';
+  const content = window.getEditorContent ? window.getEditorContent() : { html: '', css: '' };
+
+  fetch("{% url 'practice:save_project' %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      project_id: currentProjectId,
+      project_name: name,
+      html_code: content.html,
+      css_code: content.css,
+    }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      currentProjectId = data.project_id;
+      bootstrap.Modal.getInstance(document.getElementById('saveModal')).hide();
+      // Show toast
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#10b981;color:white;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.2);z-index:9999;';
+      toast.innerHTML = '<i class="bi bi-check-circle me-2"></i>Project saved!';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  });
+}
+</script>
+{% endblock %}

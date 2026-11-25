@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Practice Exercises — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Practice</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-trophy"></i> Practice</div>
+  <h1 class="page-title">Practice Exercises</h1>
+  <p class="page-subtitle">Test your HTML & CSS skills with hands-on coding challenges. Get instant feedback.</p>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <a href="{% url 'practice:exercise_list' %}" class="filter-chip {% if not request.GET.category %}active{% endif %}">
+    <i class="bi bi-grid-fill"></i> All
+  </a>
+  {% for val, label in category_choices %}
+  <a href="?category={{ val }}" class="filter-chip {% if request.GET.category == val %}active{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+{% if exercises %}
+<div class="row g-3">
+  {% for ex in exercises %}
+  <div class="col-sm-6 col-lg-4">
+    <a href="{% url 'practice:exercise_detail' ex.pk %}" class="lesson-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="lesson-card-icon" style="margin:0;background:{% if ex.difficulty == 'beginner' %}rgba(16,185,129,0.1){% elif ex.difficulty == 'intermediate' %}rgba(245,158,11,0.1){% else %}rgba(239,68,68,0.1){% endif %};color:{% if ex.difficulty == 'beginner' %}#10b981{% elif ex.difficulty == 'intermediate' %}#f59e0b{% else %}#ef4444{% endif %};">
+          <i class="bi bi-code-square"></i>
+        </div>
+        <span class="badge-{{ ex.difficulty }}">{{ ex.get_difficulty_display }}</span>
+      </div>
+      <div class="lesson-card-title">{{ ex.title }}</div>
+      <div class="lesson-card-desc">{{ ex.description }}</div>
+      <div style="margin-top:12px;">
+        <span class="badge-category" style="font-size:10px;">{{ ex.get_category_display }}</span>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card-custom">
+  <div class="card-body empty-state">
+    <i class="bi bi-trophy"></i>
+    <p>No exercises found. Try clearing the filters.</p>
+    <a href="{% url 'practice:exercise_list' %}" class="btn-primary-custom">Clear Filters</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

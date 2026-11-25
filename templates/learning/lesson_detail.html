@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ lesson.title }} — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'learning:lesson_list' %}">Lessons</a></li>
+<li class="breadcrumb-item"><a href="{% url 'learning:lesson_list' %}?category={{ lesson.category }}">{{ lesson.get_category_display }}</a></li>
+<li class="breadcrumb-item active">{{ lesson.title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Main Lesson Content -->
+  <div class="col-lg-8">
+
+    <!-- Lesson Header -->
+    <div class="animate-in" style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span class="badge-category">{{ lesson.get_category_display }}</span>
+        <span class="badge-{{ lesson.difficulty }}">{{ lesson.get_difficulty_display }}</span>
+      </div>
+      <h1 class="page-title">{{ lesson.title }}</h1>
+      <p class="page-subtitle">{{ lesson.description }}</p>
+    </div>
+
+    <!-- Lesson Body -->
+    <div class="card-custom animate-in animate-in-delay-1 mb-4">
+      <div class="card-body">
+        <div class="lesson-body">
+          {{ lesson.content|safe }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Code Example -->
+    {% if lesson.code_example %}
+    <div class="animate-in animate-in-delay-2 mb-4">
+      <div class="section-header">
+        <h2 class="section-title"><i class="bi bi-code-slash me-2 text-accent"></i>Code Example</h2>
+        <button class="btn-icon" id="copyCodeBtn" title="Copy code" onclick="copyCode()">
+          <i class="bi bi-clipboard"></i>
+        </button>
+      </div>
+      <div class="code-block">
+        <div class="code-block-header">
+          <div class="code-dots">
+            <span class="code-dot red"></span>
+            <span class="code-dot amber"></span>
+            <span class="code-dot green"></span>
+          </div>
+          <span class="code-lang-tag">HTML / CSS</span>
+        </div>
+        <div class="code-content">
+          <pre><code id="lessonCode">{{ lesson.code_example }}</code></pre>
+        </div>
+      </div>
+
+      <!-- Try in Playground button -->
+      <div style="margin-top:12px;">
+        <a href="{% url 'practice:playground' %}?html={{ lesson.code_example|urlencode }}" class="btn-primary-custom" style="font-size:13px;padding:8px 16px;">
+          <i class="bi bi-terminal"></i> Try in Playground
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Rendered Preview -->
+    {% if lesson.code_example %}
+    <div class="card-custom animate-in animate-in-delay-3 mb-4">
+      <div class="card-header">
+        <i class="bi bi-eye me-2 text-accent"></i>Rendered Output
+      </div>
+      <div class="card-body" style="padding:0;">
+        <iframe
+          id="lessonPreview"
+          style="width:100%;height:280px;border:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);"
+          sandbox="allow-scripts"
+          title="Lesson code preview">
+        </iframe>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Mark Complete -->
+    {% if user.is_authenticated %}
+    <div class="animate-in animate-in-delay-4" style="margin-bottom:24px;">
+      <button id="markCompleteBtn"
+              class="btn-success-custom"
+              onclick="toggleComplete({{ lesson.pk }})">
+        <i class="bi bi-check-circle" id="completeIcon"></i>
+        <span id="completeText">Mark as Complete</span>
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- Navigation -->
+    {% if related_lessons %}
+    <div class="animate-in animate-in-delay-4">
+      <div class="section-header">
+        <h2 class="section-title">More in {{ lesson.get_category_display }}</h2>
+      </div>
+      <div class="row g-2">
+        {% for related in related_lessons %}
+        <div class="col-sm-6">
+          <a href="{% url 'learning:lesson_detail' related.pk %}" class="lesson-card" style="padding:14px;">
+            <div class="lesson-card-title" style="font-size:13.5px;">{{ related.title }}</div>
+            <div style="margin-top:6px;"><span class="badge-{{ related.difficulty }}">{{ related.get_difficulty_display }}</span></div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+
+    <!-- Topics -->
+    {% if topics %}
+    <div class="card-custom mb-4 animate-in">
+      <div class="card-header">
+        <i class="bi bi-list-ul me-2 text-accent"></i>Topics in This Lesson
+      </div>
+      <div class="card-body" style="padding:0;">
+        {% for topic in topics %}
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border-color);">
+          <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">
+            <i class="bi bi-dot" style="color:var(--accent-primary);"></i>{{ topic.title }}
+          </div>
+          <div style="font-size:12.5px;color:var(--text-secondary);padding-left:16px;">{{ topic.description }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Navigation -->
+    <div class="card-custom animate-in animate-in-delay-1">
+      <div class="card-header">
+        <i class="bi bi-compass me-2 text-accent"></i>Explore More
+      </div>
+      <div class="card-body" style="padding:12px;">
+        <a href="{% url 'visualizer:box_model' %}" class="nav-item" style="color:var(--text-secondary);border-radius:var(--radius-sm);margin-bottom:2px;">
+          <i class="bi bi-square-half" style="color:var(--accent-primary);"></i>
+          <span style="font-size:13px;">Box Model Visualizer</span>
+        </a>
+        <a href="{% url 'visualizer:flexbox' %}" class="nav-item" style="color:var(--text-secondary);border-radius:var(--radius-sm);margin-bottom:2px;">
+          <i class="bi bi-layout-three-columns" style="color:var(--accent-primary);"></i>
+          <span style="font-size:13px;">Flexbox Visualizer</span>
+        </a>
+        <a href="{% url 'practice:playground' %}" class="nav-item" style="color:var(--text-secondary);border-radius:var(--radius-sm);">
+          <i class="bi bi-terminal" style="color:var(--accent-primary);"></i>
+          <span style="font-size:13px;">Code Playground</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Render lesson preview
+{% if lesson.code_example %}
+(function() {
+  const iframe = document.getElementById('lessonPreview');
+  const code = {{ lesson.code_example|escapejs|safe|default:"''" }};
+  const html = `<!DOCTYPE html><html><head><style>
+    body { font-family: system-ui, sans-serif; padding: 20px; color: #1e293b; }
+    * { box-sizing: border-box; }
+  </style></head><body>${code}</body></html>`;
+  iframe.srcdoc = html;
+})();
+{% endif %}
+
+// Copy code
+function copyCode() {
+  const code = document.getElementById('lessonCode').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyCodeBtn');
+    btn.innerHTML = '<i class="bi bi-clipboard-check"></i>';
+    btn.title = 'Copied!';
+    setTimeout(() => {
+      btn.innerHTML = '<i class="bi bi-clipboard"></i>';
+      btn.title = 'Copy code';
+    }, 2000);
+  });
+}
+
+// Toggle complete
+{% if user.is_authenticated %}
+function toggleComplete(lessonId) {
+  fetch(`/lessons/${lessonId}/complete/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(r => r.json())
+  .then(data => {
+    const btn = document.getElementById('markCompleteBtn');
+    const icon = document.getElementById('completeIcon');
+    const text = document.getElementById('completeText');
+    if (data.completed) {
+      btn.style.background = 'rgba(16,185,129,0.15)';
+      btn.style.borderColor = 'rgba(16,185,129,0.4)';
+      icon.className = 'bi bi-check-circle-fill';
+      text.textContent = 'Completed!';
+    } else {
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      icon.className = 'bi bi-check-circle';
+      text.textContent = 'Mark as Complete';
+    }
+  });
+}
+{% endif %}
+</script>
+{% endblock %}

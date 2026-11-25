@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}CSS Properties Playground — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">CSS Properties</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-palette"></i> CSS</div>
+  <h1 class="page-title">CSS Properties Playground</h1>
+  <p class="page-subtitle">Experiment with CSS properties on a live preview element. See changes instantly.</p>
+</div>
+
+<div class="row g-4">
+  <!-- Controls -->
+  <div class="col-lg-4">
+    <div class="card-custom">
+      <div class="card-header"><i class="bi bi-sliders me-2 text-accent"></i>Style Controls</div>
+      <div class="card-body">
+
+        <!-- Element Selector -->
+        <div style="margin-bottom:20px;">
+          <div class="form-label">Preview Element</div>
+          <select class="form-select" id="elementType" onchange="updatePreview()">
+            <option value="box">Box / Div</option>
+            <option value="text">Text Paragraph</option>
+            <option value="button">Button</option>
+            <option value="card">Card</option>
+          </select>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Colors -->
+        <div style="margin-bottom:16px;">
+          <div class="form-label">Background Color</div>
+          <div class="d-flex align-items-center gap-2">
+            <input type="color" id="bgColor" value="#6366f1" oninput="updatePreview()">
+            <input type="text" class="form-control form-control-sm" id="bgColorText" value="#6366f1" oninput="syncColor('bgColor','bgColorText')">
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <div class="form-label">Text Color</div>
+          <div class="d-flex align-items-center gap-2">
+            <input type="color" id="textColor" value="#ffffff" oninput="updatePreview()">
+            <input type="text" class="form-control form-control-sm" id="textColorText" value="#ffffff" oninput="syncColor('textColor','textColorText')">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Size -->
+        <div class="control-row mb-2">
+          <span class="control-label">Width</span>
+          <input type="range" id="propWidth" min="60" max="300" value="180" oninput="updatePreview()">
+          <span class="control-value" id="propWidthVal">180px</span>
+        </div>
+        <div class="control-row mb-3">
+          <span class="control-label">Height</span>
+          <input type="range" id="propHeight" min="40" max="200" value="80" oninput="updatePreview()">
+          <span class="control-value" id="propHeightVal">80px</span>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Spacing -->
+        <div class="control-row mb-2">
+          <span class="control-label">Padding</span>
+          <input type="range" id="propPadding" min="0" max="60" value="16" oninput="updatePreview()">
+          <span class="control-value" id="propPaddingVal">16px</span>
+        </div>
+        <div class="control-row mb-3">
+          <span class="control-label">Margin</span>
+          <input type="range" id="propMargin" min="0" max="60" value="0" oninput="updatePreview()">
+          <span class="control-value" id="propMarginVal">0px</span>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Border -->
+        <div class="control-row mb-2">
+          <span class="control-label">Border Width</span>
+          <input type="range" id="propBorderW" min="0" max="12" value="0" oninput="updatePreview()">
+          <span class="control-value" id="propBorderWVal">0px</span>
+        </div>
+        <div class="control-row mb-2">
+          <span class="control-label">Border Radius</span>
+          <input type="range" id="propBorderR" min="0" max="80" value="8" oninput="updatePreview()">
+          <span class="control-value" id="propBorderRVal">8px</span>
+        </div>
+        <div style="margin-bottom:20px;">
+          <div class="form-label">Border Color</div>
+          <input type="color" id="propBorderC" value="#4f46e5" oninput="updatePreview()">
+        </div>
+
+        <hr class="divider">
+
+        <!-- Shadow -->
+        <div class="control-row mb-2">
+          <span class="control-label">Box Shadow</span>
+          <input type="range" id="propShadow" min="0" max="30" value="0" oninput="updatePreview()">
+          <span class="control-value" id="propShadowVal">0px</span>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Typography -->
+        <div class="control-row mb-2">
+          <span class="control-label">Font Size</span>
+          <input type="range" id="propFontSize" min="10" max="48" value="16" oninput="updatePreview()">
+          <span class="control-value" id="propFontSizeVal">16px</span>
+        </div>
+        <div class="control-row mb-2">
+          <span class="control-label">Font Weight</span>
+          <input type="range" id="propFontWeight" min="1" max="9" value="4" oninput="updatePreview()">
+          <span class="control-value" id="propFontWeightVal">400</span>
+        </div>
+        <div style="margin-bottom:20px;">
+          <div class="form-label">Text Align</div>
+          <select class="form-select form-select-sm" id="propTextAlign" onchange="updatePreview()">
+            <option value="left">left</option>
+            <option value="center" selected>center</option>
+            <option value="right">right</option>
+          </select>
+        </div>
+
+        <hr class="divider">
+
+        <div style="margin-bottom:0;">
+          <div class="form-label">Display</div>
+          <select class="form-select form-select-sm" id="propDisplay" onchange="updatePreview()">
+            <option value="block" selected>block</option>
+            <option value="inline-block">inline-block</option>
+            <option value="flex">flex</option>
+            <option value="grid">grid</option>
+            <option value="inline">inline</option>
+          </select>
+        </div>
+
+        <div style="margin-top:16px;">
+          <button class="btn-danger-custom" onclick="resetProps()" style="width:100%;justify-content:center;">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview + Code -->
+  <div class="col-lg-8">
+
+    <!-- Preview -->
+    <div class="card-custom mb-4">
+      <div class="card-header"><span class="viz-card-title"><i class="bi bi-eye"></i>Live Preview</span></div>
+      <div class="card-body" style="min-height:200px;display:flex;align-items:center;justify-content:center;background:var(--bg-muted);border-radius:0 0 var(--radius-lg) var(--radius-lg);">
+        <div id="previewEl" style="text-align:center;cursor:default;">Preview Element</div>
+      </div>
+    </div>
+
+    <!-- Generated CSS -->
+    <div class="card-custom">
+      <div class="card-header">
+        <span class="viz-card-title"><i class="bi bi-code-slash"></i>Generated CSS</span>
+        <button class="btn-icon" onclick="copyPropsCSS()" title="Copy CSS">
+          <i class="bi bi-clipboard" id="propsCopyIcon"></i>
+        </button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="code-block" style="border-radius:0 0 var(--radius-lg) var(--radius-lg);box-shadow:none;">
+          <div class="code-content">
+            <pre><code id="propsCssOutput"></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function g(id) { return document.getElementById(id); }
+function v(id) { return parseInt(g(id).value); }
+function c(id) { return g(id).value; }
+function s(id) { return g(id).value; }
+
+function syncColor(colorId, textId) {
+  g(colorId).value = g(textId).value;
+  updatePreview();
+}
+
+function updatePreview() {
+  const el = g('previewEl');
+  const type = s('elementType');
+
+  const bg   = c('bgColor');
+  const fg   = c('textColor');
+  const w    = v('propWidth');
+  const h    = v('propHeight');
+  const p    = v('propPadding');
+  const m    = v('propMargin');
+  const bw   = v('propBorderW');
+  const br   = v('propBorderR');
+  const bc   = c('propBorderC');
+  const sh   = v('propShadow');
+  const fs   = v('propFontSize');
+  const fw   = v('propFontWeight') * 100;
+  const ta   = s('propTextAlign');
+  const disp = s('propDisplay');
+
+  // Sync text inputs
+  g('bgColorText').value  = bg;
+  g('textColorText').value = fg;
+
+  // Update value labels
+  g('propWidthVal').textContent     = w + 'px';
+  g('propHeightVal').textContent    = h + 'px';
+  g('propPaddingVal').textContent   = p + 'px';
+  g('propMarginVal').textContent    = m + 'px';
+  g('propBorderWVal').textContent   = bw + 'px';
+  g('propBorderRVal').textContent   = br + 'px';
+  g('propShadowVal').textContent    = sh + 'px';
+  g('propFontSizeVal').textContent  = fs + 'px';
+  g('propFontWeightVal').textContent = fw;
+
+  // Update element content by type
+  const contents = {
+    box: 'Box Element',
+    text: 'The quick brown fox jumps over the lazy dog.',
+    button: 'Click Me',
+    card: 'Card Title<br><small style="font-weight:400;font-size:0.8em;opacity:0.85;">Card description goes here.</small>',
+  };
+
+  el.innerHTML = contents[type] || 'Preview';
+
+  el.style.backgroundColor = bg;
+  el.style.color            = fg;
+  el.style.width            = w + 'px';
+  el.style.minHeight        = h + 'px';
+  el.style.padding          = p + 'px';
+  el.style.margin           = m + 'px';
+  el.style.border           = bw > 0 ? `${bw}px solid ${bc}` : 'none';
+  el.style.borderRadius     = br + 'px';
+  el.style.boxShadow        = sh > 0 ? `0 ${sh/3}px ${sh}px rgba(0,0,0,0.2)` : 'none';
+  el.style.fontSize         = fs + 'px';
+  el.style.fontWeight       = fw;
+  el.style.textAlign        = ta;
+  el.style.display          = disp;
+  el.style.cursor           = type === 'button' ? 'pointer' : 'default';
+  el.style.lineHeight       = type === 'text' ? '1.6' : '1.2';
+
+  if (type === 'button') {
+    el.style.border = bw > 0 ? `${bw}px solid ${bc}` : 'none';
+  }
+
+  const shadow = sh > 0 ? `\n  box-shadow: 0 ${Math.round(sh/3)}px ${sh}px rgba(0,0,0,0.2);` : '';
+  const border  = bw > 0 ? `\n  border: ${bw}px solid ${bc};` : '';
+
+  g('propsCssOutput').textContent = `.element {
+  /* Colors */
+  background-color: ${bg};
+  color: ${fg};
+
+  /* Sizing */
+  width: ${w}px;
+  min-height: ${h}px;
+
+  /* Spacing */
+  padding: ${p}px;
+  margin: ${m}px;
+${border}
+  border-radius: ${br}px;${shadow}
+
+  /* Typography */
+  font-size: ${fs}px;
+  font-weight: ${fw};
+  text-align: ${ta};
+
+  /* Display */
+  display: ${disp};
+}`;
+}
+
+function resetProps() {
+  g('bgColor').value = '#6366f1'; g('bgColorText').value = '#6366f1';
+  g('textColor').value = '#ffffff'; g('textColorText').value = '#ffffff';
+  g('propWidth').value = 180; g('propHeight').value = 80;
+  g('propPadding').value = 16; g('propMargin').value = 0;
+  g('propBorderW').value = 0; g('propBorderR').value = 8;
+  g('propBorderC').value = '#4f46e5';
+  g('propShadow').value = 0;
+  g('propFontSize').value = 16; g('propFontWeight').value = 4;
+  g('propTextAlign').value = 'center';
+  g('propDisplay').value = 'block';
+  updatePreview();
+}
+
+function copyPropsCSS() {
+  navigator.clipboard.writeText(g('propsCssOutput').textContent).then(() => {
+    const icon = g('propsCopyIcon');
+    icon.className = 'bi bi-clipboard-check';
+    setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+  });
+}
+
+updatePreview();
+</script>
+{% endblock %}

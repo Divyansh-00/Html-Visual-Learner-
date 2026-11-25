@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HTML Visual Learning Studio — Learn HTML and CSS through interactive visual demonstrations">
+  <title>{% block title %}HTML Visual Learning Studio{% endblock %}</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <i class="bi bi-braces-asterisk"></i>
+    </div>
+    <div class="logo-text">
+      <span class="logo-title">HTML Studio</span>
+      <span class="logo-subtitle">Visual Learning</span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+
+    <a href="{% url 'learning:dashboard' %}"
+       class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2-fill nav-icon"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <div class="nav-section-label">Learn HTML</div>
+
+    <a href="{% url 'learning:lesson_list' %}?category=html_fundamentals"
+       class="nav-item {% if active_page == 'html_fundamentals' %}active{% endif %}">
+      <i class="bi bi-file-code nav-icon"></i>
+      <span>HTML Fundamentals</span>
+    </a>
+
+    <a href="{% url 'visualizer:elements' %}"
+       class="nav-item {% if active_page == 'html_elements' %}active{% endif %}">
+      <i class="bi bi-tags nav-icon"></i>
+      <span>HTML Elements</span>
+    </a>
+
+    <div class="nav-section-label">Learn CSS</div>
+
+    <a href="{% url 'visualizer:box_model' %}"
+       class="nav-item {% if active_page == 'css_box_model' %}active{% endif %}">
+      <i class="bi bi-square-half nav-icon"></i>
+      <span>CSS Box Model</span>
+    </a>
+
+    <a href="{% url 'visualizer:flexbox' %}"
+       class="nav-item {% if active_page == 'flexbox' %}active{% endif %}">
+      <i class="bi bi-layout-three-columns nav-icon"></i>
+      <span>Flexbox</span>
+    </a>
+
+    <a href="{% url 'visualizer:css_grid' %}"
+       class="nav-item {% if active_page == 'css_grid' %}active{% endif %}">
+      <i class="bi bi-grid-3x3 nav-icon"></i>
+      <span>CSS Grid</span>
+    </a>
+
+    <a href="{% url 'visualizer:positioning' %}"
+       class="nav-item {% if active_page == 'css_positioning' %}active{% endif %}">
+      <i class="bi bi-arrows-move nav-icon"></i>
+      <span>CSS Positioning</span>
+    </a>
+
+    <a href="{% url 'visualizer:css_properties' %}"
+       class="nav-item {% if active_page == 'css_properties' %}active{% endif %}">
+      <i class="bi bi-palette nav-icon"></i>
+      <span>CSS Properties</span>
+    </a>
+
+    <div class="nav-section-label">Practice</div>
+
+    <a href="{% url 'practice:playground' %}"
+       class="nav-item {% if active_page == 'playground' %}active{% endif %}">
+      <i class="bi bi-terminal nav-icon"></i>
+      <span>Code Playground</span>
+    </a>
+
+    <a href="{% url 'practice:exercise_list' %}"
+       class="nav-item {% if active_page == 'practice' %}active{% endif %}">
+      <i class="bi bi-trophy nav-icon"></i>
+      <span>Practice Exercises</span>
+    </a>
+
+    <a href="{% url 'learning:my_progress' %}"
+       class="nav-item {% if active_page == 'progress' %}active{% endif %}">
+      <i class="bi bi-graph-up nav-icon"></i>
+      <span>My Progress</span>
+    </a>
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="sidebar-footer">
+    {% if user.is_authenticated %}
+    <div class="user-info">
+      <div class="user-avatar">{{ user.username|first|upper }}</div>
+      <div class="user-details">
+        <span class="user-name">{{ user.username }}</span>
+        <a href="{% url 'accounts:logout' %}" class="user-action">Sign out</a>
+      </div>
+    </div>
+    {% else %}
+    <a href="{% url 'accounts:login' %}" class="btn btn-sidebar-login">
+      <i class="bi bi-box-arrow-in-right"></i> Sign In
+    </a>
+    {% endif %}
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════════════ -->
+<div class="main-wrapper">
+  <!-- Top Navbar -->
+  <header class="top-navbar">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <nav class="breadcrumb-nav" aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'learning:dashboard' %}">Home</a></li>
+        {% block breadcrumb %}{% endblock %}
+      </ol>
+    </nav>
+
+    <div class="navbar-actions">
+      {% if user.is_authenticated %}
+      <a href="{% url 'practice:playground' %}" class="btn btn-nav-primary">
+        <i class="bi bi-terminal"></i>
+        <span class="d-none d-md-inline">Playground</span>
+      </a>
+      <a href="{% url 'practice:my_projects' %}" class="btn btn-nav-ghost" title="Saved Projects">
+        <i class="bi bi-folder2-open"></i>
+      </a>
+      {% else %}
+      <a href="{% url 'accounts:register' %}" class="btn btn-nav-primary">Get Started</a>
+      <a href="{% url 'accounts:login' %}" class="btn btn-nav-ghost">Sign In</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  {% if messages %}
+  <div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show custom-alert" role="alert">
+      <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Page Content -->
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Sidebar Toggle -->
+<script>
+  const toggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('active');
+    document.body.classList.add('sidebar-open');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+    document.body.classList.remove('sidebar-open');
+  }
+
+  toggle.addEventListener('click', () => {
+    if (sidebar.classList.contains('open')) closeSidebar();
+    else openSidebar();
+  });
+  overlay.addEventListener('click', closeSidebar);
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

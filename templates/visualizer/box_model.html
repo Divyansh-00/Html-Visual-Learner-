@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}CSS Box Model Visualizer — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">CSS Box Model</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.box-model-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 420px;
+  background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 10px, #f1f5f9 10px, #f1f5f9 20px);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.bm-margin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+  background: rgba(253,224,71,0.25);
+  border-radius: 4px;
+}
+
+.bm-border {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+  background: rgba(251,146,60,0.3);
+}
+
+.bm-padding {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+  background: rgba(134,239,172,0.3);
+}
+
+.bm-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.bm-label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bm-label.top-left { top: 6px; left: 8px; }
+.layer-margin .bm-label { color: #854d0e; }
+.layer-border .bm-label { color: #9a3412; }
+.layer-padding .bm-label { color: #15803d; }
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-square-half"></i> CSS</div>
+  <h1 class="page-title">CSS Box Model Visualizer</h1>
+  <p class="page-subtitle">Adjust the sliders to see how margin, border, padding and content work together.</p>
+</div>
+
+<div class="row g-4">
+  <!-- Controls Panel -->
+  <div class="col-lg-4">
+    <div class="card-custom mb-3">
+      <div class="card-header">
+        <i class="bi bi-sliders me-2 text-accent"></i>Box Properties
+      </div>
+      <div class="card-body">
+
+        <!-- Content -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#059669;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <span class="legend-dot" style="background:rgba(134,239,172,0.6);border:1px solid #86efac;"></span>Content
+          </div>
+          <div class="control-row">
+            <span class="control-label">Width</span>
+            <input type="range" id="contentWidth" min="80" max="280" value="150" oninput="update()">
+            <span class="control-value" id="contentWidthVal">150px</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Height</span>
+            <input type="range" id="contentHeight" min="40" max="200" value="80" oninput="update()">
+            <span class="control-value" id="contentHeightVal">80px</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Background</span>
+            <input type="color" id="contentColor" value="#6366f1" oninput="update()">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Padding -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#15803d;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <span class="legend-dot" style="background:rgba(134,239,172,0.4);border:1px solid #86efac;"></span>Padding
+          </div>
+          <div class="control-row">
+            <span class="control-label">All sides</span>
+            <input type="range" id="padding" min="0" max="60" value="20" oninput="update()">
+            <span class="control-value" id="paddingVal">20px</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Border -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9a3412;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <span class="legend-dot" style="background:rgba(251,146,60,0.4);border:1px solid #fb923c;"></span>Border
+          </div>
+          <div class="control-row">
+            <span class="control-label">Thickness</span>
+            <input type="range" id="borderWidth" min="0" max="20" value="4" oninput="update()">
+            <span class="control-value" id="borderWidthVal">4px</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Radius</span>
+            <input type="range" id="borderRadius" min="0" max="50" value="8" oninput="update()">
+            <span class="control-value" id="borderRadiusVal">8px</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Color</span>
+            <input type="color" id="borderColor" value="#f97316" oninput="update()">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Margin -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#854d0e;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <span class="legend-dot" style="background:rgba(253,224,71,0.4);border:1px solid #fde047;"></span>Margin
+          </div>
+          <div class="control-row">
+            <span class="control-label">All sides</span>
+            <input type="range" id="margin" min="0" max="60" value="30" oninput="update()">
+            <span class="control-value" id="marginVal">30px</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button class="btn-danger-custom" onclick="resetAll()" style="flex:1;justify-content:center;font-size:13px;padding:8px;">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="card-custom">
+      <div class="card-header"><i class="bi bi-info-circle me-2 text-accent"></i>Layer Legend</div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:20px;height:20px;background:rgba(253,224,71,0.5);border:2px dashed #fde047;border-radius:3px;"></div>
+          <div><strong style="font-size:13px;color:#854d0e;">Margin</strong><span style="font-size:12px;color:var(--text-muted);"> — Transparent outer space</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:20px;height:20px;background:rgba(251,146,60,0.5);border-radius:3px;"></div>
+          <div><strong style="font-size:13px;color:#9a3412;">Border</strong><span style="font-size:12px;color:var(--text-muted);"> — Element border line</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:20px;height:20px;background:rgba(134,239,172,0.5);border-radius:3px;"></div>
+          <div><strong style="font-size:13px;color:#15803d;">Padding</strong><span style="font-size:12px;color:var(--text-muted);"> — Space inside border</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:20px;height:20px;background:#6366f1;border-radius:3px;"></div>
+          <div><strong style="font-size:13px;color:var(--accent-primary);">Content</strong><span style="font-size:12px;color:var(--text-muted);"> — Actual content area</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual + Code -->
+  <div class="col-lg-8">
+
+    <!-- Visual Stage -->
+    <div class="card-custom mb-4">
+      <div class="card-header">
+        <span class="viz-card-title"><i class="bi bi-eye"></i>Visual Preview</span>
+      </div>
+      <div class="card-body">
+        <div class="box-model-stage" id="boxModelStage">
+          <div class="bm-margin layer-margin" id="bmMargin">
+            <span class="bm-label top-left">Margin</span>
+            <div class="bm-border layer-border" id="bmBorder">
+              <span class="bm-label top-left">Border</span>
+              <div class="bm-padding layer-padding" id="bmPadding">
+                <span class="bm-label top-left">Padding</span>
+                <div class="bm-content" id="bmContent">
+                  Content
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generated CSS -->
+    <div class="card-custom">
+      <div class="card-header">
+        <span class="viz-card-title"><i class="bi bi-code-slash"></i>Generated CSS</span>
+        <button class="btn-icon" onclick="copyCSS()" title="Copy CSS">
+          <i class="bi bi-clipboard" id="cssCopyIcon"></i>
+        </button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="code-block" style="border-radius:0 0 var(--radius-lg) var(--radius-lg);box-shadow:none;">
+          <div class="code-content">
+            <pre><code id="cssOutput"></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function val(id) { return parseInt(document.getElementById(id).value); }
+function col(id) { return document.getElementById(id).value; }
+
+function update() {
+  const cw = val('contentWidth');
+  const ch = val('contentHeight');
+  const p  = val('padding');
+  const bw = val('borderWidth');
+  const br = val('borderRadius');
+  const bc = col('borderColor');
+  const m  = val('margin');
+  const cc = col('contentColor');
+
+  // Update value labels
+  document.getElementById('contentWidthVal').textContent  = cw + 'px';
+  document.getElementById('contentHeightVal').textContent = ch + 'px';
+  document.getElementById('paddingVal').textContent       = p  + 'px';
+  document.getElementById('borderWidthVal').textContent   = bw + 'px';
+  document.getElementById('borderRadiusVal').textContent  = br + 'px';
+  document.getElementById('marginVal').textContent        = m  + 'px';
+
+  // Update visual
+  const content = document.getElementById('bmContent');
+  const padding = document.getElementById('bmPadding');
+  const border  = document.getElementById('bmBorder');
+  const margin  = document.getElementById('bmMargin');
+
+  content.style.width           = cw + 'px';
+  content.style.height          = ch + 'px';
+  content.style.background      = cc;
+  content.style.borderRadius    = br + 'px';
+
+  padding.style.padding         = p + 'px';
+  padding.style.borderRadius    = (br + p) + 'px';
+
+  border.style.border           = `${bw}px solid ${bc}`;
+  border.style.borderRadius     = (br + p + bw) + 'px';
+
+  margin.style.padding          = m + 'px';
+  margin.style.borderRadius     = (br + p + bw + m) + 'px';
+
+  // Update CSS code
+  const css = `.box {
+  /* Content */
+  width: ${cw}px;
+  height: ${ch}px;
+  background-color: ${cc};
+
+  /* Padding — space inside border */
+  padding: ${p}px;
+
+  /* Border */
+  border: ${bw}px solid ${bc};
+  border-radius: ${br}px;
+
+  /* Margin — space outside border */
+  margin: ${m}px;
+
+  /* Total rendered width: ${cw + p*2 + bw*2}px */
+  /* Total rendered height: ${ch + p*2 + bw*2}px */
+}`;
+  document.getElementById('cssOutput').textContent = css;
+}
+
+function resetAll() {
+  document.getElementById('contentWidth').value  = 150;
+  document.getElementById('contentHeight').value = 80;
+  document.getElementById('padding').value       = 20;
+  document.getElementById('borderWidth').value   = 4;
+  document.getElementById('borderRadius').value  = 8;
+  document.getElementById('borderColor').value   = '#f97316';
+  document.getElementById('margin').value        = 30;
+  document.getElementById('contentColor').value  = '#6366f1';
+  update();
+}
+
+function copyCSS() {
+  navigator.clipboard.writeText(document.getElementById('cssOutput').textContent).then(() => {
+    const icon = document.getElementById('cssCopyIcon');
+    icon.className = 'bi bi-clipboard-check';
+    setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+  });
+}
+
+update();
+</script>
+{% endblock %}

@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}HTML Elements Visualizer — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">HTML Elements</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.elements-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.element-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.element-btn:hover, .element-btn.active {
+  border-color: var(--accent-primary);
+  background: rgba(99,102,241,0.08);
+  color: var(--accent-primary);
+}
+
+.element-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: rgba(99,102,241,0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.element-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.element-btn.active .element-name { color: var(--accent-primary); }
+
+.attr-chip {
+  display: inline-block;
+  background: rgba(99,102,241,0.1);
+  color: var(--accent-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin: 3px 3px 3px 0;
+}
+
+.preview-frame {
+  width: 100%;
+  min-height: 160px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-tags"></i> HTML</div>
+  <h1 class="page-title">HTML Elements Visualizer</h1>
+  <p class="page-subtitle">Select any HTML element to see its description, syntax, attributes, and a live rendered example.</p>
+</div>
+
+<div class="row g-4">
+  <!-- Element List -->
+  <div class="col-lg-3">
+    <div class="card-custom">
+      <div class="card-header"><i class="bi bi-list-ul me-2 text-accent"></i>HTML Elements</div>
+      <div class="card-body elements-sidebar" id="elementList">
+        <!-- Buttons injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="col-lg-9">
+    <div id="elementDetail" style="display:none;">
+
+      <!-- Header -->
+      <div class="card-custom mb-4">
+        <div class="card-body">
+          <div style="display:flex;align-items:flex-start;gap:20px;">
+            <div style="font-size:40px;" id="elIcon">🔷</div>
+            <div>
+              <div style="margin-bottom:4px;">
+                <code style="font-size:18px;font-weight:700;" id="elTag">&lt;div&gt;</code>
+              </div>
+              <div style="font-size:17px;font-weight:700;color:var(--text-primary);margin-bottom:8px;" id="elName">Division</div>
+              <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;" id="elDesc">...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Code -->
+        <div class="col-md-6">
+          <div class="section-header">
+            <h2 class="section-title"><i class="bi bi-code-slash me-2 text-accent"></i>HTML Syntax</h2>
+          </div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <div class="code-dots">
+                <span class="code-dot red"></span><span class="code-dot amber"></span><span class="code-dot green"></span>
+              </div>
+              <span class="code-lang-tag">HTML</span>
+            </div>
+            <div class="code-content"><pre><code id="elSyntax"></code></pre></div>
+          </div>
+        </div>
+
+        <!-- Attributes -->
+        <div class="col-md-6">
+          <div class="section-header">
+            <h2 class="section-title"><i class="bi bi-info-circle me-2 text-accent"></i>Key Attributes</h2>
+          </div>
+          <div class="card-custom">
+            <div class="card-body" id="elAttrs"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="card-custom mt-4">
+        <div class="card-header"><span class="viz-card-title"><i class="bi bi-eye"></i>Rendered Output</span></div>
+        <div class="card-body" style="background:var(--bg-muted);border-radius:0 0 var(--radius-lg) var(--radius-lg);padding:20px;">
+          <iframe class="preview-frame" id="elPreview" sandbox="allow-scripts" title="Element preview"></iframe>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Empty state -->
+    <div id="elementEmpty" class="card-custom">
+      <div class="card-body empty-state">
+        <i class="bi bi-tags" style="font-size:48px;"></i>
+        <p style="font-size:16px;font-weight:600;">Select an HTML element from the list</p>
+        <p style="font-size:13px;">to see its description, syntax, attributes, and a live preview.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ELEMENTS = [
+  {
+    tag: 'div', name: 'Division', icon: '📦',
+    desc: 'The &lt;div&gt; element is a generic block-level container with no semantic meaning. It is used to group content for styling or scripting purposes.',
+    syntax: '<div class="container">\n  <p>Content goes here.</p>\n  <p>Another paragraph.</p>\n</div>',
+    attrs: ['class', 'id', 'style', 'data-*'],
+    preview: `<div style="background:#6366f1;color:white;padding:20px;border-radius:10px;font-family:sans-serif;max-width:300px;">
+  <p style="margin:0;font-weight:600;">I am a div!</p>
+  <p style="margin:8px 0 0;font-size:14px;opacity:0.85;">I can contain any content and I'm styled with CSS.</p>
+</div>`,
+  },
+  {
+    tag: 'span', name: 'Inline Span', icon: '✏️',
+    desc: 'The &lt;span&gt; element is a generic inline container. It is used to style a part of text or group inline elements without breaking flow.',
+    syntax: '<p>This is <span class="highlight">highlighted</span> text.</p>',
+    attrs: ['class', 'id', 'style'],
+    preview: `<p style="font-family:sans-serif;font-size:18px;">This is <span style="background:#fde047;padding:2px 6px;border-radius:4px;color:#854d0e;">highlighted</span> text using a span.</p>`,
+  },
+  {
+    tag: 'h1–h6', name: 'Headings', icon: '📰',
+    desc: 'Heading elements &lt;h1&gt; through &lt;h6&gt; define six levels of section headings. h1 is the most important and should appear only once per page.',
+    syntax: '<h1>Main Page Title</h1>\n<h2>Section Heading</h2>\n<h3>Sub-section</h3>',
+    attrs: ['id', 'class'],
+    preview: `<div style="font-family:sans-serif;padding:10px;">
+  <h1 style="margin:0 0 8px;color:#0f172a;font-size:28px;">h1 — Main Heading</h1>
+  <h2 style="margin:0 0 8px;color:#1e293b;font-size:22px;">h2 — Section Heading</h2>
+  <h3 style="margin:0 0 8px;color:#334155;font-size:18px;">h3 — Sub-section</h3>
+  <h4 style="margin:0 0 8px;color:#475569;font-size:16px;">h4 — Sub-sub-section</h4>
+</div>`,
+  },
+  {
+    tag: 'p', name: 'Paragraph', icon: '📝',
+    desc: 'The &lt;p&gt; element represents a paragraph of text. Browsers add default top and bottom margin to separate paragraphs from each other.',
+    syntax: '<p>This is a paragraph of text.</p>\n<p>This is another paragraph.</p>',
+    attrs: ['class', 'id'],
+    preview: `<div style="font-family:sans-serif;padding:10px;max-width:400px;">
+  <p style="margin-top:0;line-height:1.6;color:#334155;">This is the first paragraph. It contains some text that wraps across multiple lines.</p>
+  <p style="line-height:1.6;color:#334155;">This is the second paragraph. Notice the automatic spacing between paragraphs.</p>
+</div>`,
+  },
+  {
+    tag: 'a', name: 'Anchor / Link', icon: '🔗',
+    desc: 'The &lt;a&gt; element creates a hyperlink to another page, resource, or location. The href attribute specifies the destination.',
+    syntax: '<a href="https://example.com" target="_blank">Visit Example</a>\n<a href="#section-id">Jump to section</a>\n<a href="mailto:hi@example.com">Send Email</a>',
+    attrs: ['href', 'target', 'title', 'download', 'rel'],
+    preview: `<div style="font-family:sans-serif;padding:16px;display:flex;flex-direction:column;gap:12px;">
+  <a href="#" style="color:#6366f1;text-decoration:none;font-weight:600;font-size:16px;">External link →</a>
+  <a href="#" style="color:#6366f1;text-decoration:underline;font-size:16px;">Underlined link</a>
+  <a href="#" style="display:inline-block;background:#6366f1;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Button-style link</a>
+</div>`,
+  },
+  {
+    tag: 'img', name: 'Image', icon: '🖼️',
+    desc: 'The &lt;img&gt; element embeds an image. It is a void element (self-closing). The alt attribute provides alternative text for accessibility.',
+    syntax: '<img src="photo.jpg"\n     alt="A scenic photo"\n     width="300"\n     height="200">',
+    attrs: ['src', 'alt', 'width', 'height', 'loading', 'srcset'],
+    preview: `<div style="font-family:sans-serif;padding:10px;">
+  <div style="width:200px;height:120px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-size:40px;">🏔️</div>
+  <p style="margin:8px 0 0;font-size:13px;color:#64748b;">&lt;img alt="Mountain landscape"&gt;</p>
+</div>`,
+  },
+  {
+    tag: 'button', name: 'Button', icon: '🔘',
+    desc: 'The &lt;button&gt; element creates a clickable button. It can be used inside or outside forms. The type attribute controls its behaviour.',
+    syntax: '<button type="button" onclick="doSomething()">Click Me</button>\n<button type="submit">Submit Form</button>\n<button type="reset" disabled>Reset</button>',
+    attrs: ['type', 'disabled', 'onclick', 'name', 'value', 'form'],
+    preview: `<div style="font-family:sans-serif;padding:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+  <button style="background:#6366f1;color:white;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Primary</button>
+  <button style="background:white;color:#6366f1;border:2px solid #6366f1;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Outline</button>
+  <button disabled style="background:#e2e8f0;color:#94a3b8;border:none;padding:10px 20px;border-radius:8px;font-size:14px;cursor:not-allowed;">Disabled</button>
+</div>`,
+  },
+  {
+    tag: 'ul / ol', name: 'Lists', icon: '📋',
+    desc: '&lt;ul&gt; creates an unordered (bulleted) list. &lt;ol&gt; creates an ordered (numbered) list. Each item is wrapped in &lt;li&gt;.',
+    syntax: '<ul>\n  <li>First item</li>\n  <li>Second item</li>\n</ul>\n\n<ol>\n  <li>Step one</li>\n  <li>Step two</li>\n</ol>',
+    attrs: ['type (ol)', 'start (ol)', 'reversed (ol)'],
+    preview: `<div style="font-family:sans-serif;padding:10px;display:flex;gap:40px;">
+  <div>
+    <p style="font-weight:700;margin:0 0 8px;color:#6366f1;">Unordered List</p>
+    <ul style="margin:0;line-height:1.8;color:#334155;padding-left:20px;">
+      <li>HTML</li><li>CSS</li><li>JavaScript</li>
+    </ul>
+  </div>
+  <div>
+    <p style="font-weight:700;margin:0 0 8px;color:#6366f1;">Ordered List</p>
+    <ol style="margin:0;line-height:1.8;color:#334155;padding-left:20px;">
+      <li>Learn HTML</li><li>Learn CSS</li><li>Build apps</li>
+    </ol>
+  </div>
+</div>`,
+  },
+  {
+    tag: 'table', name: 'Table', icon: '📊',
+    desc: 'The &lt;table&gt; element creates a tabular data display with rows (&lt;tr&gt;), header cells (&lt;th&gt;), and data cells (&lt;td&gt;).',
+    syntax: '<table>\n  <thead>\n    <tr>\n      <th>Name</th>\n      <th>Score</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Alice</td>\n      <td>95</td>\n    </tr>\n  </tbody>\n</table>',
+    attrs: ['border', 'cellpadding', 'cellspacing', 'summary'],
+    preview: `<div style="font-family:sans-serif;padding:10px;">
+  <table style="border-collapse:collapse;width:100%;font-size:14px;">
+    <thead><tr style="background:#6366f1;color:white;">
+      <th style="padding:10px 16px;text-align:left;border-radius:8px 0 0 0;">Name</th>
+      <th style="padding:10px 16px;text-align:left;">Language</th>
+      <th style="padding:10px 16px;text-align:left;border-radius:0 8px 0 0;">Score</th>
+    </tr></thead>
+    <tbody>
+      <tr style="background:#f8fafc;"><td style="padding:8px 16px;border-bottom:1px solid #e2e8f0;">Alice</td><td style="padding:8px 16px;border-bottom:1px solid #e2e8f0;">HTML</td><td style="padding:8px 16px;border-bottom:1px solid #e2e8f0;">95</td></tr>
+      <tr><td style="padding:8px 16px;">Bob</td><td style="padding:8px 16px;">CSS</td><td style="padding:8px 16px;">88</td></tr>
+    </tbody>
+  </table>
+</div>`,
+  },
+  {
+    tag: 'form', name: 'Form', icon: '📋',
+    desc: 'The &lt;form&gt; element creates an HTML form for user input. It wraps input controls and handles data submission to a server.',
+    syntax: '<form method="POST" action="/submit">\n  <label>Name:\n    <input type="text" name="name">\n  </label>\n  <button type="submit">Send</button>\n</form>',
+    attrs: ['action', 'method', 'enctype', 'novalidate', 'autocomplete'],
+    preview: `<form style="font-family:sans-serif;padding:16px;display:flex;flex-direction:column;gap:12px;max-width:300px;" onsubmit="return false;">
+  <div><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Your Name</label>
+  <input type="text" placeholder="Alice" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;"></div>
+  <div><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Email</label>
+  <input type="email" placeholder="alice@example.com" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;"></div>
+  <button type="submit" style="background:#6366f1;color:white;border:none;padding:10px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Submit</button>
+</form>`,
+  },
+  {
+    tag: 'input', name: 'Input', icon: '⌨️',
+    desc: 'The &lt;input&gt; element creates a form input control. The type attribute controls what kind of input is displayed.',
+    syntax: '<input type="text" placeholder="Name">\n<input type="email" placeholder="Email">\n<input type="password">\n<input type="checkbox">\n<input type="range" min="0" max="100">',
+    attrs: ['type', 'name', 'value', 'placeholder', 'required', 'disabled', 'min', 'max', 'step'],
+    preview: `<div style="font-family:sans-serif;padding:16px;display:flex;flex-direction:column;gap:10px;max-width:280px;">
+  <input type="text" placeholder="Text input" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;">
+  <input type="email" placeholder="email@example.com" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <input type="checkbox" id="cb1" style="width:16px;height:16px;">
+    <label for="cb1" style="font-size:14px;color:#374151;">Checkbox</label>
+  </div>
+  <input type="range" style="width:100%;">
+</div>`,
+  },
+  {
+    tag: 'section', name: 'Section', icon: '📑',
+    desc: 'The &lt;section&gt; element defines a standalone section of content that has a thematic grouping, typically with a heading.',
+    syntax: '<section>\n  <h2>About Us</h2>\n  <p>We build awesome web apps.</p>\n</section>',
+    attrs: ['id', 'class', 'aria-label'],
+    preview: `<section style="font-family:sans-serif;padding:16px;border-left:4px solid #6366f1;background:#f8fafc;border-radius:0 8px 8px 0;">
+  <h2 style="margin:0 0 8px;color:#0f172a;font-size:18px;">About Us</h2>
+  <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">We build awesome web applications using HTML, CSS, and JavaScript.</p>
+</section>`,
+  },
+  {
+    tag: 'header', name: 'Header', icon: '🏠',
+    desc: 'The &lt;header&gt; element represents introductory content, typically containing a logo, navigation, and site title.',
+    syntax: '<header>\n  <h1>My Website</h1>\n  <nav>...</nav>\n</header>',
+    attrs: ['id', 'class'],
+    preview: `<header style="font-family:sans-serif;background:#0f172a;color:white;padding:16px 24px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;">
+  <div style="font-size:18px;font-weight:800;">HTML Studio</div>
+  <nav style="display:flex;gap:20px;"><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;font-size:14px;">Home</a><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;font-size:14px;">About</a><a href="#" style="color:rgba(255,255,255,0.7);text-decoration:none;font-size:14px;">Contact</a></nav>
+</header>`,
+  },
+  {
+    tag: 'footer', name: 'Footer', icon: '🔽',
+    desc: 'The &lt;footer&gt; element represents the footer of a section or page, typically containing copyright, links, and contact info.',
+    syntax: '<footer>\n  <p>&copy; 2024 My Company</p>\n  <a href="/privacy">Privacy Policy</a>\n</footer>',
+    attrs: ['id', 'class'],
+    preview: `<footer style="font-family:sans-serif;background:#f1f5f9;border-top:1px solid #e2e8f0;padding:20px 24px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;">
+  <div style="font-size:14px;color:#64748b;">&copy; 2024 HTML Visual Studio</div>
+  <div style="display:flex;gap:16px;"><a href="#" style="color:#6366f1;text-decoration:none;font-size:13px;">Privacy</a><a href="#" style="color:#6366f1;text-decoration:none;font-size:13px;">Terms</a></div>
+</footer>`,
+  },
+  {
+    tag: 'nav', name: 'Navigation', icon: '🧭',
+    desc: 'The &lt;nav&gt; element defines a set of navigation links. It is a semantic landmark that helps screen readers identify navigation.',
+    syntax: '<nav aria-label="Main navigation">\n  <a href="/">Home</a>\n  <a href="/about">About</a>\n  <a href="/contact">Contact</a>\n</nav>',
+    attrs: ['aria-label', 'id', 'class'],
+    preview: `<nav style="font-family:sans-serif;background:#6366f1;padding:14px 20px;border-radius:10px;display:flex;gap:4px;">
+  <a href="#" style="color:white;text-decoration:none;padding:6px 14px;border-radius:6px;background:rgba(255,255,255,0.15);font-size:14px;font-weight:600;">Home</a>
+  <a href="#" style="color:rgba(255,255,255,0.75);text-decoration:none;padding:6px 14px;border-radius:6px;font-size:14px;">About</a>
+  <a href="#" style="color:rgba(255,255,255,0.75);text-decoration:none;padding:6px 14px;border-radius:6px;font-size:14px;">Contact</a>
+</nav>`,
+  },
+  {
+    tag: 'main', name: 'Main', icon: '📄',
+    desc: 'The &lt;main&gt; element represents the dominant content of the &lt;body&gt;. There should only be one &lt;main&gt; per page.',
+    syntax: '<main>\n  <h1>Welcome</h1>\n  <p>Main page content goes here.</p>\n</main>',
+    attrs: ['id', 'class', 'role'],
+    preview: `<main style="font-family:sans-serif;padding:20px;border:2px dashed #6366f1;border-radius:10px;background:#f8fafc;">
+  <h1 style="margin:0 0 10px;color:#0f172a;font-size:22px;">Main Content Area</h1>
+  <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">The &lt;main&gt; element holds the primary content of the page. Navigation, sidebars and footers go outside of &lt;main&gt;.</p>
+</main>`,
+  },
+];
+
+function buildElementList() {
+  const list = document.getElementById('elementList');
+  ELEMENTS.forEach((el, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'element-btn';
+    btn.id = 'elBtn-' + i;
+    btn.innerHTML = `<span class="element-tag">&lt;${el.tag}&gt;</span><span class="element-name">${el.name}</span>`;
+    btn.onclick = () => showElement(i);
+    list.appendChild(btn);
+  });
+}
+
+function showElement(index) {
+  const el = ELEMENTS[index];
+  document.querySelectorAll('.element-btn').forEach((b, i) => b.classList.toggle('active', i === index));
+
+  document.getElementById('elementEmpty').style.display = 'none';
+  document.getElementById('elementDetail').style.display = 'block';
+
+  document.getElementById('elIcon').textContent   = el.icon;
+  document.getElementById('elTag').textContent    = '<' + el.tag + '>';
+  document.getElementById('elName').textContent   = el.name;
+  document.getElementById('elDesc').innerHTML     = el.desc;
+  document.getElementById('elSyntax').textContent = el.syntax;
+
+  const attrsEl = document.getElementById('elAttrs');
+  attrsEl.innerHTML = el.attrs.map(a => `<span class="attr-chip">${a}</span>`).join('');
+
+  const previewHtml = `<!DOCTYPE html><html><head><style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; padding: 16px; }
+  </style></head><body>${el.preview}</body></html>`;
+  document.getElementById('elPreview').srcdoc = previewHtml;
+}
+
+buildElementList();
+</script>
+{% endblock %}

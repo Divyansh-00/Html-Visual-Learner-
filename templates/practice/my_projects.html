@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Projects — HTML Visual Learning Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'practice:playground' %}">Playground</a></li>
+<li class="breadcrumb-item active">My Projects</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-tag"><i class="bi bi-folder2-open"></i> Projects</div>
+  <h1 class="page-title">My Saved Projects</h1>
+  <p class="page-subtitle">Your saved HTML & CSS playground projects. Click to load any project in the editor.</p>
+</div>
+
+<div style="margin-bottom:20px;">
+  <a href="{% url 'practice:playground' %}" class="btn-primary-custom">
+    <i class="bi bi-plus-circle"></i> New Project
+  </a>
+</div>
+
+{% if projects %}
+<div class="row g-3">
+  {% for project in projects %}
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-custom">
+      <div class="card-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">{{ project.project_name }}</div>
+            <div style="font-size:12px;color:var(--text-muted);">
+              <i class="bi bi-clock"></i> Updated {{ project.updated_at|date:"M j, Y g:i A" }}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-icon" onclick="deleteProject({{ project.pk }}, this)" title="Delete project">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Code preview snippet -->
+        <div style="background:#0f172a;border-radius:8px;padding:10px 12px;margin-bottom:12px;max-height:80px;overflow:hidden;">
+          <code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#94a3b8;white-space:pre-wrap;">{{ project.html_code|truncatechars:100 }}</code>
+        </div>
+
+        <a href="{% url 'practice:playground' %}?project={{ project.pk }}"
+           class="btn-primary-custom" style="width:100%;justify-content:center;font-size:13px;padding:8px;">
+          <i class="bi bi-pencil-square"></i> Open in Playground
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card-custom">
+  <div class="card-body empty-state">
+    <i class="bi bi-folder2-open"></i>
+    <p>You haven't saved any projects yet.</p>
+    <a href="{% url 'practice:playground' %}" class="btn-primary-custom">Open Playground</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteProject(id, btn) {
+  if (!confirm('Delete this project? This cannot be undone.')) return;
+  fetch(`/practice/projects/${id}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      btn.closest('.col-sm-6').remove();
+    }
+  });
+}
+</script>
+{% endblock %}
